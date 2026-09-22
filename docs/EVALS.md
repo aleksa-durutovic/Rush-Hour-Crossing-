@@ -10,7 +10,7 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Baseline result:** PASS. The Vitest determinism check replayed the sequence 100 times against the normal preset and all final states matched. The six accepted actions produced tick 6.
 
-**Post-change result:** Not run.
+**Post-change result:** PASS. The unchanged 100-run determinism test passed against the normal preset and the final tick remained 6.
 
 ## E2 — Grid boundary consumes a turn
 
@@ -20,7 +20,7 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Baseline result:** PASS. The boundary test kept the player at `(4, 6)`, advanced tick to 1, preserved three lives, and kept the game active.
 
-**Post-change result:** Not run.
+**Post-change result:** PASS. The unchanged boundary test passed with position `(4, 6)`, tick 1, three lives, and active status.
 
 ## E3 — Invalid configuration uses complete fallback
 
@@ -30,7 +30,7 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Baseline result:** PASS. Automated validation returned the complete default config and all three invalid field names. Browser verification displayed `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.` and the game remained focused and playable.
 
-**Post-change result:** Not run.
+**Post-change result:** PASS. The unchanged config suite passed and browser repetition displayed the same three invalid field names with complete fallback.
 
 ## E4 — Baseline regression
 
@@ -42,4 +42,4 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Baseline result:** FAIL. The initial normal-preset screenshot shows separated adjacent rectangles and a windshield per occupied cell for length-two vehicles.
 
-**Post-change result:** Not run.
+**Post-change result:** PASS. Post-change browser inspection shows length-two vehicles as contiguous two-cell bodies with one directional windshield. The wrapped vehicle is split only by the physical board boundary and has one windshield across its two segments.

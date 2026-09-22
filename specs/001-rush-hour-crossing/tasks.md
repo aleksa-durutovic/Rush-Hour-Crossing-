@@ -103,9 +103,9 @@
 **Purpose**: Test one hypothesis without changing the prompt, context, schema, or eval criteria simultaneously.
 
 - [x] T029 Record Claim, Signal, Hypothesis, Smallest change, Check, Result, and Limitation for E4 in `docs/EVIDENCE_003.md`
-- [ ] T030 Implement exactly one smallest corrective change in the single relevant source area identified by E4
-- [ ] T031 Repeat unchanged E1–E4 and append post-change results to `docs/EVALS.md`
-- [ ] T032 Re-run typecheck, full tests, build, and dependency audit and record actual results in `docs/EVIDENCE_003.md`
+- [x] T030 Implement exactly one smallest corrective change in the single relevant source area identified by E4
+- [x] T031 Repeat unchanged E1–E4 and append post-change results to `docs/EVALS.md`
+- [x] T032 Re-run typecheck, full tests, build, and dependency audit and record actual results in `docs/EVIDENCE_003.md`
 - [ ] T033 Finalize `docs/EVIDENCE_003.md`, `docs/AI_USAGE_LOG.md`, `security.md`, and partner contribution notes without adding Session 004 work
 
 ---

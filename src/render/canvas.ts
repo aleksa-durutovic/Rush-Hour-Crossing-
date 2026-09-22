@@ -1,6 +1,6 @@
 import { GRID_COLUMNS, GRID_ROWS } from '../game/constants'
 import type { GameConfig, GameState, LaneDefinition } from '../game/state'
-import { getOccupiedCells } from '../game/traffic'
+import { getVehicleCells } from '../game/traffic'
 
 export const CELL_SIZE = 64
 export const HUD_HEIGHT = 72
@@ -110,18 +110,42 @@ function drawVehicles(
   lanes: readonly LaneDefinition[],
 ): void {
   lanes.forEach((lane, laneIndex) => {
-    const occupied = getOccupiedCells(lane, tick)
-    for (const column of occupied) {
-      const x = column * CELL_SIZE + 5
-      const y = HUD_HEIGHT + lane.row * CELL_SIZE + 12
-      context.fillStyle = COLORS.vehicles[laneIndex % COLORS.vehicles.length]
-      roundedRect(context, x, y, CELL_SIZE - 10, CELL_SIZE - 24, 8)
-      context.fill()
-      context.fillStyle = COLORS.surface
-      const windowX = lane.direction === 'right' ? x + CELL_SIZE - 24 : x + 8
-      context.fillRect(windowX, y + 8, 11, 9)
+    for (const initialColumn of lane.vehicleStarts) {
+      const cells = getVehicleCells(lane, tick, initialColumn)
+      const groups = groupContiguousCells(cells)
+      const frontColumn = lane.direction === 'right' ? cells.at(-1) : cells[0]
+
+      for (const group of groups) {
+        const x = group[0] * CELL_SIZE + 5
+        const y = HUD_HEIGHT + lane.row * CELL_SIZE + 12
+        const width = group.length * CELL_SIZE - 10
+        context.fillStyle = COLORS.vehicles[laneIndex % COLORS.vehicles.length]
+        roundedRect(context, x, y, width, CELL_SIZE - 24, 8)
+        context.fill()
+
+        if (frontColumn !== undefined && group.includes(frontColumn)) {
+          context.fillStyle = COLORS.surface
+          const windowX = lane.direction === 'right' ? x + width - 19 : x + 8
+          context.fillRect(windowX, y + 8, 11, 9)
+        }
+      }
     }
   })
+}
+
+function groupContiguousCells(cells: readonly number[]): number[][] {
+  const groups: number[][] = []
+
+  for (const column of cells) {
+    const current = groups.at(-1)
+    if (!current || column !== current[current.length - 1]! + 1) {
+      groups.push([column])
+    } else {
+      current.push(column)
+    }
+  }
+
+  return groups
 }
 
 function drawPlayer(context: CanvasRenderingContext2D, state: GameState): void {

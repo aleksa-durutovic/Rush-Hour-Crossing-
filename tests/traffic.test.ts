@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LaneDefinition } from '../src/game/state'
-import { getOccupiedCells } from '../src/game/traffic'
+import { getOccupiedCells, getVehicleCells } from '../src/game/traffic'
 
 describe('traffic occupancy', () => {
   it('wraps a right-moving multi-cell vehicle', () => {
@@ -14,6 +14,7 @@ describe('traffic occupancy', () => {
 
     expect(getOccupiedCells(lane, 0)).toEqual(new Set([8, 0]))
     expect(getOccupiedCells(lane, 1)).toEqual(new Set([0, 1]))
+    expect(getVehicleCells(lane, 0, 8)).toEqual([8, 0])
   })
 
   it('wraps a left-moving vehicle', () => {

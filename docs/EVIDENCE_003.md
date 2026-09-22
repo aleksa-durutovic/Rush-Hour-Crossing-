@@ -84,6 +84,36 @@ E1, E2, and E3 passed with their original expectations unchanged. Full results a
 
 **Check:** Repeat unchanged E1–E4, all automated checks, and visual inspection of normal-preset length-two vehicles.
 
-**Result:** Pending controlled change.
+**Result:** Supported. The post-change renderer displayed contiguous length-two bodies with one windshield while unchanged E1–E3 and the full automated suite remained green.
 
 **Limitation:** The check assesses legibility of fixed geometric vehicles, not animation, sprites, or visual effects, which remain out of scope.
+
+### Controlled change result
+
+The renderer now groups each configured vehicle's cells into contiguous visible segments and places a single windshield on its directional front. Traffic calculation, turn rules, configuration, presets, input mapping, and eval expectations were unchanged.
+
+Post-change results:
+
+| Check | Result |
+|---|---|
+| E1 deterministic play | PASS — unchanged 100-run normal-preset test |
+| E2 boundary turn | PASS — unchanged boundary test |
+| E3 invalid configuration | PASS — unchanged automated suite and repeated browser fallback |
+| E4 vehicle length legibility | PASS — contiguous length-two bodies with one windshield verified in browser |
+| `npm run typecheck` | PASS |
+| `npm run test:run` | PASS — six files, 40 tests |
+| `npm run build` | PASS — 13 modules transformed |
+| `npm audit --audit-level=high` | PASS — zero vulnerabilities |
+
+The hypothesis was supported: preserving per-vehicle identity in the render path fixed the visible-length problem without changing game state or rule outcomes.
+
+## Git preservation
+
+- Initial project checkpoint: `11f731b`
+- Constitution checkpoint: `434bd56`
+- Functional baseline: `8091482`
+- Immutable annotated baseline tag: `s003-baseline-v1`
+
+## Partner contributions
+
+The two students' names, driver/observer role rotation, and concrete contributions must be supplied by the pair. They are intentionally not inferred from repository metadata or AI activity.

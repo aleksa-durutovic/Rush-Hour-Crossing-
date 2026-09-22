@@ -3,18 +3,28 @@ import type { LaneDefinition, Position } from './state'
 
 export function getOccupiedCells(lane: LaneDefinition, tick: number): Set<number> {
   const occupied = new Set<number>()
-  const movementSteps = Math.floor(tick / lane.moveEveryTicks)
-  const direction = lane.direction === 'right' ? 1 : -1
 
   for (const initialColumn of lane.vehicleStarts) {
-    const vehicleStart = modulo(initialColumn + direction * movementSteps, GRID_COLUMNS)
-
-    for (let offset = 0; offset < lane.vehicleLength; offset += 1) {
-      occupied.add(modulo(vehicleStart + offset, GRID_COLUMNS))
+    for (const column of getVehicleCells(lane, tick, initialColumn)) {
+      occupied.add(column)
     }
   }
 
   return occupied
+}
+
+export function getVehicleCells(
+  lane: LaneDefinition,
+  tick: number,
+  initialColumn: number,
+): number[] {
+  const movementSteps = Math.floor(tick / lane.moveEveryTicks)
+  const direction = lane.direction === 'right' ? 1 : -1
+  const vehicleStart = modulo(initialColumn + direction * movementSteps, GRID_COLUMNS)
+
+  return Array.from({ length: lane.vehicleLength }, (_value, offset) =>
+    modulo(vehicleStart + offset, GRID_COLUMNS),
+  )
 }
 
 export function hasTrafficAt(
