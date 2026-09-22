@@ -1,0 +1,24 @@
+{
+  "color": {
+    "background": "#DCE8E5",
+    "surface": "#F7FBFA",
+    "text": "#17212B",
+    "accent": "#F45B4F",
+    "secondary": "#315F68",
+    "warning": "#A63D35"
+  },
+  "type": {
+    "display": "Trebuchet MS, Segoe UI, sans-serif",
+    "body": "Trebuchet MS, Segoe UI, sans-serif",
+    "utility": "Consolas, monospace",
+    "scale_ratio": 1.25
+  },
+  "layout": {
+    "grid": "single centered game board",
+    "max_width": "960px",
+    "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64]
+  },
+  "voice": "Clear traffic-control language with short, calm instructions.",
+  "signature_element": "Bold offset road-sign shadow used only around the game frame.",
+  "css_architecture": "cascade-layers"
+}
