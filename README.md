@@ -15,9 +15,19 @@ A deterministic, turn-based crossing game built with TypeScript and Canvas for S
 - `npm run test:run` — run the test suite once
 - `npm run typecheck` — run TypeScript checks without emitting files
 
+## Play
+
+After starting the development server, focus the game board and use:
+
+- Arrow keys or W/A/S/D to move one cell
+- Space to wait for one turn
+- R to restart
+
+Optional URL query fields are `lives`, `crossingsToWin`, and `difficulty`. See `docs/GAME_SPEC.md` for their runtime validation contract.
+
 ## Project status
 
-The Vite/TypeScript starter is present. Gameplay is implemented through the Spec Kit workflow described in `docs/BUILD_PROMPT_V1.md`.
+The Session 003 core game, runtime configuration validation, deterministic rule tests, and evidence workflow are implemented on the feature branch.
 
 ## Scope
 

@@ -14,7 +14,7 @@
 
 - [x] T001 Record E1–E3 inputs and expectations before implementation in `docs/EVALS.md`
 - [x] T002 Run the starter typecheck, test, build, and dependency audit commands and record actual outputs in `docs/EVIDENCE_003.md`
-- [ ] T003 Replace the starter-only test with behavior test files and create the planned module directories under `src/` and `tests/`
+- [x] T003 Replace the starter-only test with behavior test files and create the planned module directories under `src/` and `tests/`
 
 ---
 
@@ -26,17 +26,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T004 [US1] Write failing traffic occupancy and wrap-around tests covering fixed tick-derived movement in `tests/traffic.test.ts`
-- [ ] T005 [US1] Write failing preset invariant tests requiring one free cell in every lane for ticks 0–199 in `tests/presets.test.ts`
-- [ ] T006 [US1] Write failing turn tests for R1, R2, collision A/B, one-life maximum, tick advancement, and determinism in `tests/turn.test.ts`
+- [x] T004 [US1] Write failing traffic occupancy and wrap-around tests covering fixed tick-derived movement in `tests/traffic.test.ts`
+- [x] T005 [US1] Write failing preset invariant tests requiring one free cell in every lane for ticks 0–199 in `tests/presets.test.ts`
+- [x] T006 [US1] Write failing turn tests for R1, R2, collision A/B, one-life maximum, tick advancement, and determinism in `tests/turn.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Define grid, actions, positions, lane definitions, configuration-facing types, and game state in `src/game/constants.ts` and `src/game/state.ts`
-- [ ] T008 [US1] Define all easy, normal, and hard lane presets outside game logic in `src/config/presets.ts`
-- [ ] T009 [US1] Implement tick-derived vehicle positions and occupied-cell queries in `src/game/traffic.ts`
-- [ ] T010 [US1] Implement the pure action-to-state transition with collision A/B ordering in `src/game/turn.ts`
-- [ ] T011 [US1] Run `npm run test:run` and confirm the independent User Story 1 tests pass
+- [x] T007 [US1] Define grid, actions, positions, lane definitions, configuration-facing types, and game state in `src/game/constants.ts` and `src/game/state.ts`
+- [x] T008 [US1] Define all easy, normal, and hard lane presets outside game logic in `src/config/presets.ts`
+- [x] T009 [US1] Implement tick-derived vehicle positions and occupied-cell queries in `src/game/traffic.ts`
+- [x] T010 [US1] Implement the pure action-to-state transition with collision A/B ordering in `src/game/turn.ts`
+- [x] T011 [US1] Run `npm run test:run` and confirm the independent User Story 1 tests pass
 
 **Checkpoint**: A deterministic crossing simulation works without DOM or Canvas.
 
@@ -50,17 +50,17 @@
 
 ### Tests for User Story 2
 
-- [ ] T012 [US2] Extend failing turn tests for R5, R7, score, reachable win/loss, invariants, post-game input lock, and restart in `tests/turn.test.ts`
-- [ ] T013 [US2] Write failing keyboard mapping tests for arrows, W/A/S/D, Space, R, unsupported keys, and `event.repeat` in `tests/input.test.ts`
+- [x] T012 [US2] Extend failing turn tests for R5, R7, score, reachable win/loss, invariants, post-game input lock, and restart in `tests/turn.test.ts`
+- [x] T013 [US2] Write failing keyboard mapping tests for arrows, W/A/S/D, Space, R, unsupported keys, and `event.repeat` in `tests/input.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Complete crossing, score, win, loss, input-lock, invariant, and restart behavior in `src/game/turn.ts` and `src/game/state.ts`
-- [ ] T015 [US2] Implement browser-independent keyboard-event mapping in `src/input/keyboard.ts`
-- [ ] T016 [US2] Implement the 9-by-7 Canvas board, vehicles, player, lane-direction cues, HUD, and end-state instructions in `src/render/canvas.ts`
-- [ ] T017 [US2] Apply the approved design tokens, cascade layers, visible focus, and motion-free responsive frame in `src/style.css` and `index.html`
-- [ ] T018 [US2] Wire initialization, accepted key actions, restart, and render-after-turn behavior in `src/main.ts`
-- [ ] T019 [US2] Run `npm run test:run` and manually demonstrate one win, one loss, post-game input lock, and restart
+- [x] T014 [US2] Complete crossing, score, win, loss, input-lock, invariant, and restart behavior in `src/game/turn.ts` and `src/game/state.ts`
+- [x] T015 [US2] Implement browser-independent keyboard-event mapping in `src/input/keyboard.ts`
+- [x] T016 [US2] Implement the 9-by-7 Canvas board, vehicles, player, lane-direction cues, HUD, and end-state instructions in `src/render/canvas.ts`
+- [x] T017 [US2] Apply the approved design tokens, cascade layers, visible focus, and motion-free responsive frame in `src/style.css` and `index.html`
+- [x] T018 [US2] Wire initialization, accepted key actions, restart, and render-after-turn behavior in `src/main.ts`
+- [x] T019 [US2] Run `npm run test:run` and manually demonstrate one win, one loss, post-game input lock, and restart
 
 **Checkpoint**: The complete unconfigured game is playable and independently demonstrable.
 
@@ -74,13 +74,13 @@
 
 ### Tests for User Story 3
 
-- [ ] T020 [US3] Write failing tests for the valid example, missing fields, unknown fields, all five required invalid examples, multiple invalid fields, and atomic fallback in `tests/config.test.ts`
+- [x] T020 [US3] Write failing tests for the valid example, missing fields, unknown fields, all five required invalid examples, multiple invalid fields, and atomic fallback in `tests/config.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Implement `GameConfig` defaults, numeric parsing, field validation, invalid-field aggregation, and atomic fallback in `src/config/game-config.ts`
-- [ ] T022 [US3] Integrate validated configuration and visible invalid-field feedback into `src/main.ts` and `src/render/canvas.ts`
-- [ ] T023 [US3] Run `npm run test:run` and manually verify the valid and combined-invalid query scenarios
+- [x] T021 [US3] Implement `GameConfig` defaults, numeric parsing, field validation, invalid-field aggregation, and atomic fallback in `src/config/game-config.ts`
+- [x] T022 [US3] Integrate validated configuration and visible invalid-field feedback into `src/main.ts` and `src/render/canvas.ts`
+- [x] T023 [US3] Run `npm run test:run` and manually verify the valid and combined-invalid query scenarios
 
 **Checkpoint**: All three user stories work together while remaining testable through pure modules.
 
@@ -90,10 +90,10 @@
 
 **Purpose**: Complete Definition of Done checks and preserve the unmodified first functional result.
 
-- [ ] T024 Run `npm run typecheck`, `npm run test:run`, `npm run build`, and `npm audit --audit-level=high`, recording actual results in `docs/EVIDENCE_003.md`
-- [ ] T025 Run E1–E3 on the baseline and append actual results without changing their expectations in `docs/EVALS.md`
-- [ ] T026 Capture the initial game, invalid-config message, reachable win, and reachable loss as evidence referenced from `docs/EVIDENCE_003.md`
-- [ ] T027 Commit the first functional baseline with an English Conventional Commit and create immutable annotated tag `s003-baseline-v1`
+- [x] T024 Run `npm run typecheck`, `npm run test:run`, `npm run build`, and `npm audit --audit-level=high`, recording actual results in `docs/EVIDENCE_003.md`
+- [x] T025 Run E1–E3 on the baseline and append actual results without changing their expectations in `docs/EVALS.md`
+- [x] T026 Capture the initial game, invalid-config message, reachable win, and reachable loss as evidence referenced from `docs/EVIDENCE_003.md`
+- [x] T027 Commit the first functional baseline with an English Conventional Commit and create immutable annotated tag `s003-baseline-v1`
 - [ ] T028 Define E4 from the first reproducible baseline problem, write its expectation before formal execution, then record its baseline result in `docs/EVALS.md`
 
 ---

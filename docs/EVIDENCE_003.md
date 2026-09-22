@@ -33,3 +33,41 @@ The first visible problem is a starter TypeScript configuration omission: Vite c
 | `npm audit --audit-level=high` | 0 | Zero vulnerabilities reported |
 
 F0 is green. The project may proceed to constitution and specification work.
+
+## Functional baseline
+
+The first complete implementation was produced from the reviewed constitution, specification, plan, tasks, and E1–E3 expectations. No Session 004 capability or network service was added.
+
+### Automated commands
+
+| Command | Exit | Actual result |
+|---|---:|---|
+| `npm run typecheck` | 0 | TypeScript completed without diagnostics |
+| `npm run test:run` | 0 | Six test files and 40 tests passed |
+| `npm run build` | 0 | Vite 8.3.0 transformed 13 modules and completed the production build |
+| `npm audit --audit-level=high` | 0 | Zero vulnerabilities reported |
+| `npm run dev -- --host 127.0.0.1` | running for QA | Vite 8.3.0 reported ready at `http://127.0.0.1:5173/` in 516 ms |
+
+### Browser evidence
+
+- Initial game board rendered the 9-by-7 grid, five directed traffic lanes, player, lives, crossings, score, tick, difficulty, and keyboard controls.
+- The Canvas received visible keyboard focus and its accessible description reflected current lives, crossings, score, tick, and status.
+- Space advanced tick from 0 to 1 without moving the player.
+- W advanced one turn; the browser automation's `Up` key alias produced two injected events and was not treated as product evidence. Unit coverage verifies one non-repeated `ArrowUp` keydown maps to one action.
+- Combined invalid query `?lives=0&crossingsToWin=11&difficulty=insane` displayed all three invalid field names and used the complete default configuration.
+- With `crossingsToWin=1&difficulty=easy`, `up, up, up, up, up, up` reached `won` at tick 6 with one crossing and score 100.
+- With the same preset, `up, up, right, up, up, up` reached `lost` at tick 6 with zero lives.
+- An additional move after loss left the state unchanged; R restored three lives, zero crossings, zero score, tick 0, and active status.
+
+Browser screenshots of the initial board and win overlay were captured in the Codex QA run. The accessible state text above is retained here so the evidence remains reviewable without the temporary browser tab.
+
+### Accessibility and visual checks
+
+- The UI uses no animation or timer.
+- The focused Canvas has a visible 5 px outline.
+- Relevant measured contrast ratios were 12.97:1 for primary text/background, 5.63:1 for secondary text/background, 9.42:1 for error text/background, and 6.79:1 for focus/surface.
+- The layout was visually inspected in the in-app browser; a dedicated automated accessibility audit was not added because it would require new tooling outside the approved stack.
+
+### Baseline eval status
+
+E1, E2, and E3 passed with their original expectations unchanged. Full results are in `docs/EVALS.md`. E4 remains intentionally undefined until the baseline tag exists and a reproducible baseline weakness is selected.
