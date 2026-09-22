@@ -94,7 +94,7 @@
 - [x] T025 Run E1–E3 on the baseline and append actual results without changing their expectations in `docs/EVALS.md`
 - [x] T026 Capture the initial game, invalid-config message, reachable win, and reachable loss as evidence referenced from `docs/EVIDENCE_003.md`
 - [x] T027 Commit the first functional baseline with an English Conventional Commit and create immutable annotated tag `s003-baseline-v1`
-- [ ] T028 Define E4 from the first reproducible baseline problem, write its expectation before formal execution, then record its baseline result in `docs/EVALS.md`
+- [x] T028 Define E4 from the first reproducible baseline problem, write its expectation before formal execution, then record its baseline result in `docs/EVALS.md`
 
 ---
 
@@ -102,7 +102,7 @@
 
 **Purpose**: Test one hypothesis without changing the prompt, context, schema, or eval criteria simultaneously.
 
-- [ ] T029 Record Claim, Signal, Hypothesis, Smallest change, Check, Result, and Limitation for E4 in `docs/EVIDENCE_003.md`
+- [x] T029 Record Claim, Signal, Hypothesis, Smallest change, Check, Result, and Limitation for E4 in `docs/EVIDENCE_003.md`
 - [ ] T030 Implement exactly one smallest corrective change in the single relevant source area identified by E4
 - [ ] T031 Repeat unchanged E1–E4 and append post-change results to `docs/EVALS.md`
 - [ ] T032 Re-run typecheck, full tests, build, and dependency audit and record actual results in `docs/EVIDENCE_003.md`

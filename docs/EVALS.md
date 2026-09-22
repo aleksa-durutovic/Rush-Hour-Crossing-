@@ -34,12 +34,12 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 ## E4 — Baseline regression
 
-This case is intentionally undefined until the first reproducible baseline problem is observed. Its claim, concrete input, and expected outcome must be written before E4 is executed as an eval.
+**Input:** Render tick 0 of the normal preset and inspect a configured vehicle whose `vehicleLength` is 2, including one that crosses the horizontal board boundary.
 
-**Baseline problem observed:** Not observed yet.
+**Baseline problem observed:** The renderer draws every occupied cell as a separate inset rectangle with its own windshield. A two-cell vehicle therefore appears as two independent one-cell cars rather than one longer vehicle.
 
-**Expected before E4 run:** Not defined yet.
+**Expected before E4 run:** Each configured vehicle is visually one contiguous body spanning its configured number of cells with exactly one directional windshield. A vehicle crossing the wrap boundary may appear as two edge segments, but those segments must represent one vehicle and contain only one windshield in total.
 
-**Baseline result:** Not run.
+**Baseline result:** FAIL. The initial normal-preset screenshot shows separated adjacent rectangles and a windshield per occupied cell for length-two vehicles.
 
 **Post-change result:** Not run.

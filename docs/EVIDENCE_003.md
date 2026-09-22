@@ -70,4 +70,20 @@ Browser screenshots of the initial board and win overlay were captured in the Co
 
 ### Baseline eval status
 
-E1, E2, and E3 passed with their original expectations unchanged. Full results are in `docs/EVALS.md`. E4 remains intentionally undefined until the baseline tag exists and a reproducible baseline weakness is selected.
+E1, E2, and E3 passed with their original expectations unchanged. Full results are in `docs/EVALS.md`. After tag `s003-baseline-v1` was created, the reproducible vehicle-length presentation problem below was selected as E4.
+
+## Controlled change hypothesis
+
+**Claim:** Baseline traffic logic correctly occupies multiple cells, but the Canvas presentation does not make configured vehicle length visually legible.
+
+**Signal:** In the baseline normal-preset screenshot, every occupied cell is drawn as an inset rounded rectangle with its own windshield. Adjacent cells belonging to one length-two vehicle look like separate cars.
+
+**Hypothesis:** Rendering occupied cells independently discards the identity and configured length of each vehicle.
+
+**Smallest change:** Keep game state, traffic timing, presets, config, input, and eval criteria unchanged. Change only the traffic rendering path so each configured vehicle is drawn as one contiguous body with one windshield, while preserving correct wrap-boundary segments.
+
+**Check:** Repeat unchanged E1–E4, all automated checks, and visual inspection of normal-preset length-two vehicles.
+
+**Result:** Pending controlled change.
+
+**Limitation:** The check assesses legibility of fixed geometric vehicles, not animation, sprites, or visual effects, which remain out of scope.
