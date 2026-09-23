@@ -4,12 +4,12 @@ A deterministic, turn-based crossing game built with TypeScript and Canvas for S
 
 ## Requirements
 
-- Node.js 22.12 or newer
-- npm
+- Node.js 24 or newer and npm 11 or newer, as pinned by `.nvmrc` and the `engines` field in `package.json`
+- With nvm, run `nvm use` in the project root to select the pinned Node version
 
 ## Commands
 
-- `npm install` — install locked dependencies
+- `npm ci` — install the exact dependencies from `package-lock.json`
 - `npm run dev` — start the local development server
 - `npm run build` — type-check and create a production build
 - `npm run test:run` — run the test suite once
@@ -27,7 +27,7 @@ Optional URL query fields are `lives`, `crossingsToWin`, and `difficulty`. See `
 
 ## Project status
 
-The Session 003 core game, runtime configuration validation, deterministic rule tests, and evidence workflow are implemented on the feature branch.
+The Session 003 core game, runtime configuration validation, deterministic rule tests, and evidence workflow are implemented on `main`. The Voxel Night City redesign (`specs/002-voxel-night-city/`) is an accepted visual addendum that does not change gameplay rules. Evidence is in `docs/EVIDENCE_003.md` and `docs/evidence/`.
 
 ## Scope
 
