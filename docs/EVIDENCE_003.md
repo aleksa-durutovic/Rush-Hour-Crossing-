@@ -83,8 +83,7 @@ D1–D8 in `docs/GAME_SPEC.md` link to the rows above and to the tests that prov
 ## Visual asset
 
 - File: `public/assets/voxel-night-city-backdrop.png`, PNG 1672×941, 1,361,897 bytes, added in `ddcb519`.
-- Origin: an original generated bitmap created for this project during the Voxel Night City redesign, under the pair-approved scope exception recorded in `AI_USAGE_LOG.md`. It is decorative only. If it does not load, the board, HUD, and controls stay on the solid `#07152d` background.
-- The name of the generation tool was not recorded in the repository.
+- Origin: an original bitmap generated with OpenAI Codex for this project during the Voxel Night City redesign, under the pair-approved scope exception recorded in `AI_USAGE_LOG.md`. It is decorative only. If it does not load, the board, HUD, and controls stay on the solid `#07152d` background.
 
 ## Known limitations
 
