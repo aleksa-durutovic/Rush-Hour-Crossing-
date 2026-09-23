@@ -15,7 +15,7 @@
   },
   "layout": {
     "grid": "single centered game board",
-    "max_width": "960px",
+    "max_width": "820px",
     "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64]
   },
   "voice": "Direct arcade traffic-control language with short, energetic instructions.",

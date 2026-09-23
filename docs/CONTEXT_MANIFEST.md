@@ -9,6 +9,7 @@ This manifest records the context intentionally used for the Rush Hour Crossing 
 | `docs/BUILD_PROMPT_V1.md` | Yes | Governs the planning and execution sequence | Control prompt | Repeating it unnecessarily consumes context |
 | `.specify/memory/constitution.md` | After F1 | Project-wide non-negotiable engineering rules | 2 | An over-broad principle could block a small implementation |
 | Active `.agents/skills/speckit-*/SKILL.md` | Yes, one workflow at a time | Exact local Spec Kit behavior | 2 | Project skills and globally installed CLI have different patch versions |
+| `AGENTS.md` | Yes, after the second review | Root instructions that point agents to the sources above and to the required checks | 2 | Must stay a pointer; it must not restate or override `GAME_SPEC.md` |
 | `README.md`, `package.json`, `src/`, `tests/` | Yes | Actual stack, scripts, structure, and baseline state | 3 | Starter details may become stale; commands must be verified, not assumed |
 | Old chats, other projects, and Frogger examples from the web | No | Not approved as project sources | Excluded | Scope contamination and accidental copying |
 | Environment values, credentials, private URLs, and tokens | No | Not required for the static game | Prohibited | Secret disclosure |

@@ -122,18 +122,18 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 ## Definition of Done
 
 - [x] **D1** Igra se pokreće komandom iz README-a startera, bez grešaka u konzoli pri startu (komanda i stvarni output idu u `EVIDENCE_003.md`).
-  - Dokaz: `EVIDENCE_003.md` → *Functional baseline / Automated commands* (`npm run dev`, typecheck, test, build).
+  - Dokaz: `EVIDENCE_003.md` → *Part 1 — Current state* → *Automated checks* (`npm ci`, typecheck, test, build, audit) i *Browser checks* → *Startup* (bez grešaka i upozorenja u konzoli).
 - [x] **D2** Pravila R1–R7 su pokrivena automatizovanim testovima nad logikom poteza (bez Canvasa).
-  - Dokaz: `tests/turn.test.ts` (R1, R2, R4, R5, R7), `tests/traffic.test.ts` (R3), `tests/presets.test.ts` i `tests/config.test.ts` (R6).
+  - Dokaz: `tests/turn.test.ts` (R1, R2, R4, R5, R7), `tests/traffic.test.ts` (R3), `tests/presets.test.ts` i `tests/config.test.ts` (R6), `tests/end-message.test.ts` (poruka za R7 odgovara statusu).
 - [x] **D3** Determinizam: isti config i isti niz akcija daje identično stanje (test).
-  - Dokaz: `tests/turn.test.ts` → *is deterministic for the same config and action sequence*; eval E1 u `EVALS.md`.
+  - Dokaz: `tests/turn.test.ts` → *is deterministic for the same config and action sequence*; eval E1 u `EVALS.md` → *Current result*.
 - [x] **D4** Za sva tri difficulty preseta nijedna traka nije potpuno blokirana ni u jednom tick-u 0..199 (test).
-  - Dokaz: `tests/presets.test.ts` → *never-blocked traffic lanes through tick 199* za `easy`, `normal` i `hard`.
+  - Dokaz: `tests/presets.test.ts` → *never-blocked traffic lanes through tick 199* za `easy`, `normal` i `hard`; dodatno *never places two vehicles of one lane in the same cell through tick 199*.
 - [x] **D5** Validacija konfiguracije prihvata validne primere i odbija svih 5 nevalidnih primera iznad uz listu grešaka; pri nevalidnom ulazu igra koristi default i prikazuje poruku (test + screenshot).
-  - Dokaz: `tests/config.test.ts` (validan primer, svih 5 nevalidnih primera, kombinovani nevalidan upit); screenshot `docs/evidence/d5-invalid-config.png`, opisan u `EVIDENCE_003.md` → *Saved screenshots and restart-hint fix*.
+  - Dokaz: `tests/config.test.ts` (validan primer, svih 5 nevalidnih primera, kombinovani nevalidan upit); screenshot `docs/evidence/d5-invalid-config.png`, opisan u `EVIDENCE_003.md` → *Part 1 — Current state* → *Browser checks*.
 - [x] **D6** Pobeda i poraz su dostižni odigravanjem (screenshot ili zapis).
-  - Dokaz: screenshotovi `docs/evidence/d6-win.png` (šest `W` → `won`, „CITY CROSSED!“) i `docs/evidence/d6-loss.png` (`W, W, D, W, W, W` → `lost`, „GAME OVER“), sa `crossingsToWin=1&difficulty=easy`; testovi `tests/turn.test.ts`, `tests/reachability.test.ts` i `tests/end-message.test.ts` (tekst poruke odgovara statusu).
+  - Dokaz: screenshotovi `docs/evidence/d6-win.png` (šest `W` → `won`, „CITY CROSSED!“) i `docs/evidence/d6-loss.png` (`W, W, D, W, W, W` → `lost`, „GAME OVER“), sa `crossingsToWin=1&difficulty=easy`; testovi `tests/turn.test.ts`, `tests/reachability.test.ts` i `tests/end-message.test.ts` (tekst poruke odgovara statusu); zapis u `EVIDENCE_003.md` → *Part 1 — Current state* → *Browser checks*.
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
-  - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`.
+  - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`; svi imaju *Current result*.
 - [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.
-  - Dokaz: nema AI/tool/mreže/backenda; nema `.env` fajlova ni kredencijala u praćenim fajlovima. Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i zabeležen u `AI_USAGE_LOG.md` i ne menja gameplay.
+  - Dokaz: nema AI/tool/mreže/backenda; nema `.env` fajlova ni kredencijala u praćenim fajlovima (provera `git ls-files` i `git grep`, 2026-09-23). Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i zabeležen u `AI_USAGE_LOG.md` i ne menja gameplay.

@@ -1,18 +1,108 @@
 # Evidence — Session 003
 
-## Initial claim
+This document has two parts:
+
+1. **Current state.** The only evidence that describes the project as it is now. Every result was produced on 2026-09-23 from the code at commit `d42607f`. Later commits change documentation and evidence files only.
+2. **Development history.** The process record the assignment requires: F0, baseline, controlled change, and later corrections. Numbers in that part were true on their own date and are superseded by part 1.
+
+---
+
+# Part 1 — Current state (verified 2026-09-23, code at `d42607f`)
+
+## Environment
+
+- Node.js `v24.14.0`, npm `11.12.1` (pinned by `.nvmrc` and `package.json` `engines`)
+- Vite `8.3.0`, TypeScript `7.0.2`, Vitest `5.0.1`
+- Windows 11, Google Chrome (headless, driven through the DevTools protocol) and the Claude desktop in-app browser
+
+## Automated checks
+
+All commands were run in sequence from a clean `npm ci`, with no dev server running.
+
+| Command | Exit | Actual result |
+|---|---:|---|
+| `npm ci` | 0 | Installed from `package-lock.json`; `found 0 vulnerabilities` |
+| `npm run typecheck` | 0 | `tsc --noEmit` completed without diagnostics |
+| `npm run test:run` | 0 | 7 test files, 46 tests passed |
+| `npm run build` | 0 | Vite 8.3.0, 14 modules transformed, production build completed |
+| `npm audit --audit-level=high` | 0 | 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
+
+## Browser checks
+
+Method: a Vite dev server served the current `main`, and a scripted headless Chrome session loaded each URL in a fresh page, sent real key events, and read the page state. The viewport was 1280×1000 at device scale 1 with `prefers-reduced-motion: reduce`, unless a row says otherwise. Game state was read from the Canvas accessible description, which `src/main.ts` rebuilds after every turn.
+
+| Check | Input | Observed result | Screenshot |
+|---|---|---|---|
+| Startup | `/` | No console errors or warnings; one `main` landmark; backdrop image loaded | — |
+| Active board, desktop | `/` | 3 lives, 0/3 crossings, score 0, tick 0, `active`; title, HUD, 9×7 board, five directed lanes, player, and keyboard controls visible | [`active-desktop.png`](evidence/active-desktop.png) |
+| Wait | `/`, Space | Tick 0 → 1, status `active` | — |
+| Out-of-grid move | `/`, S at the start row | Tick 0 → 1, 3 lives, status `active` (the position is covered by eval E2) | — |
+| Narrow viewport | `/` at 320×800 | `scrollWidth` 320 = `clientWidth` 320 (no horizontal overflow); board 286 px wide; controls fit within 320 px | [`active-narrow-320.png`](evidence/active-narrow-320.png) |
+| Keyboard focus | In-app browser: blur, then Tab | Tab focuses the Canvas; `:focus-visible` matches; outline `4px solid #ffc83d`, offset 6 px | [`keyboard-focus.png`](evidence/keyboard-focus.png) (headless capture with `focus({ focusVisible: true })`, which applies the same CSS rule) |
+| Valid configuration | `?lives=2&crossingsToWin=3&difficulty=hard` | 2 lives, 0/3, no alert | — |
+| Invalid configuration (D5) | `?lives=0&crossingsToWin=11&difficulty=insane` | Alert: `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.`; state uses defaults (3 lives, 0/3, tick 0, `active`) | [`d5-invalid-config.png`](evidence/d5-invalid-config.png) |
+| Win (D6) | `?crossingsToWin=1&difficulty=easy`, `W ×6` | `won`, 3 lives, 1/1, score 100, tick 6; overlay `CITY CROSSED!` + `PRESS R TO RESTART` | [`d6-win.png`](evidence/d6-win.png) |
+| Loss (D6) | same URL, `W W D W W W` | `lost`, 0 lives, 0/1, score 0, tick 6; overlay `GAME OVER` + `PRESS R TO RESTART` | [`d6-loss.png`](evidence/d6-loss.png) |
+| Input after loss (R7) | after the loss, W | State unchanged: `lost`, 0 lives, tick 6 | — |
+| Restart (R7) | after the loss, R | 3 lives, 0/1, score 0, tick 0, `active` | — |
+| Reduced motion | `/`, Space, reduce | `.board-frame` has no `turn-flash` class; transition 0 s; filter and transform `none` | — |
+| Motion allowed | `/`, Space, no-preference | `turn-flash` applied: 0.18 s transition, `brightness(1.13)`, 2 px lift; turn state is identical | — |
+| E4 wrap case | `/`, Space ×2 (normal preset, tick 2) | Row-4 vehicle wrapping across columns 8 and 0 is drawn as two edge segments with one windshield in total | [`e4-wrap-normal-tick2.png`](evidence/e4-wrap-normal-tick2.png) |
+
+The operating-system reduced-motion setting was not toggled. The media feature was emulated through the DevTools protocol, which is what the CSS query reads.
+
+## Contrast
+
+Ratios were computed with the WCAG 2 formula from the colours in `src/style.css` and `src/render/canvas.ts`.
+
+| Pair | Ratio |
+|---|---:|
+| Body/title text `#f5f7ff` on page base `#07152d` | 17.01:1 |
+| Title accent `#ffc83d` on `#07152d` | 11.77:1 |
+| Brief `#d8e6ff` on `#07152d` | 14.45:1 |
+| Eyebrow `#57d3e5` on `#07152d` | 10.27:1 |
+| Controls `#e4efff` on `#07152d` | 15.67:1 |
+| Invalid-config alert `#fff4f3` on `#3a1625` | 14.75:1 |
+| Canvas HUD `#f5f7ff` on `#0d2345` | 14.61:1 |
+| Canvas tick line `#57d3e5` on `#0d2345` | 8.82:1 |
+| Focus outline `#ffc83d` against frame `#0d2345` (non-text) | 10.11:1 |
+| End overlay: win title `#ffc83d`, lowest to highest across all board colours under the overlay | 7.23–10.29:1 |
+| End overlay: loss title `#ff6b63` (42 px bold, large text) | 4.01–5.71:1 |
+| End overlay: restart hint `#f5f7ff` | 10.45–14.87:1 |
+
+Page text sits over the decorative backdrop and its darkening gradient. Those ratios use the base background `#07152d`, not every pixel of the bitmap.
+
+## Evals
+
+E1–E4 were repeated against the current code and passed. The results are in [`EVALS.md`](EVALS.md) under **Current result**.
+
+## Definition of Done
+
+D1–D8 in `docs/GAME_SPEC.md` link to the rows above and to the tests that prove them.
+
+## Visual asset
+
+- File: `public/assets/voxel-night-city-backdrop.png`, PNG 1672×941, 1,361,897 bytes, added in `ddcb519`.
+- Origin: an original generated bitmap created for this project during the Voxel Night City redesign, under the pair-approved scope exception recorded in `AI_USAGE_LOG.md`. It is decorative only. If it does not load, the board, HUD, and controls stay on the solid `#07152d` background.
+- The name of the generation tool was not recorded in the repository.
+
+## Known limitations
+
+- Visual acceptance uses scripted screenshots and manual review. There is no automated screenshot-comparison test.
+- Keyboard-focus behaviour was verified in the in-app browser. The saved focus image was produced headlessly with `focus({ focusVisible: true })`.
+- Contrast over the bitmap backdrop is measured against its base colour, not per pixel.
+
+---
+
+# Part 2 — Development history
+
+The values in this part describe the project on their own date and are superseded by Part 1.
+
+## F0 — starter status (2026-09-22)
 
 The approved minimal stack is Vite with vanilla TypeScript, Canvas 2D, Vitest, npm, and explicit runtime validation without a validation library. No gameplay code existed before this starter setup.
 
-## F0 — starter status
-
-Environment observed on 2026-09-22:
-
-- Node.js: `v24.14.0`
-- npm: `11.12.1`
-- Vitest installed by the lockfile: `5.0.1`
-
-Initial commands and actual results:
+Environment: Node.js `v24.14.0`, npm `11.12.1`, Vitest `5.0.1`.
 
 | Command | Exit | Actual result |
 |---|---:|---|
@@ -21,9 +111,7 @@ Initial commands and actual results:
 | `npm run build` | 1 | Stopped at the same TS2882 error before Vite build |
 | `npm audit --audit-level=high` | 1 | Audit endpoint/cache access failed in the sandbox; no vulnerability result was claimed |
 
-The first visible problem is a starter TypeScript configuration omission: Vite client declarations were not loaded. The allowed correction is limited to adding the Vite client type declaration to `tsconfig.json`, after which the same commands must be repeated. Gameplay implementation remains paused until the repeated F0 checks are green.
-
-### F0 repeated after the minimal correction
+The first visible problem was a starter configuration omission: Vite client declarations were not loaded. The only correction was to add the Vite client type declaration to `tsconfig.json`. The same commands were then repeated:
 
 | Command | Exit | Actual result |
 |---|---:|---|
@@ -32,87 +120,84 @@ The first visible problem is a starter TypeScript configuration omission: Vite c
 | `npm run build` | 0 | Vite 8.3.0 built five modules successfully |
 | `npm audit --audit-level=high` | 0 | Zero vulnerabilities reported |
 
-F0 is green. The project may proceed to constitution and specification work.
-
-## Functional baseline
+## Functional baseline (2026-09-22, `8091482`, tag `s003-baseline-v1`)
 
 The first complete implementation was produced from the reviewed constitution, specification, plan, tasks, and E1–E3 expectations. No Session 004 capability or network service was added.
 
-### Automated commands
-
-| Command | Exit | Actual result |
+| Command | Exit | Result at that time |
 |---|---:|---|
-| `npm run typecheck` | 0 | TypeScript completed without diagnostics |
-| `npm run test:run` | 0 | Six test files and 40 tests passed |
-| `npm run build` | 0 | Vite 8.3.0 transformed 13 modules and completed the production build |
+| `npm run typecheck` | 0 | No diagnostics |
+| `npm run test:run` | 0 | 6 test files, 40 tests passed |
+| `npm run build` | 0 | 13 modules transformed |
 | `npm audit --audit-level=high` | 0 | Zero vulnerabilities reported |
-| `npm run dev -- --host 127.0.0.1` | running for QA | Vite 8.3.0 reported ready at `http://127.0.0.1:5173/` in 516 ms |
 
-### Browser evidence
+Browser checks at that time, recorded from the Canvas accessible description:
 
-- Initial game board rendered the 9-by-7 grid, five directed traffic lanes, player, lives, crossings, score, tick, difficulty, and keyboard controls.
-- The Canvas received visible keyboard focus and its accessible description reflected current lives, crossings, score, tick, and status.
-- Space advanced tick from 0 to 1 without moving the player.
-- W advanced one turn; the browser automation's `Up` key alias produced two injected events and was not treated as product evidence. Unit coverage verifies one non-repeated `ArrowUp` keydown maps to one action.
-- Combined invalid query `?lives=0&crossingsToWin=11&difficulty=insane` displayed all three invalid field names and used the complete default configuration.
-- With `crossingsToWin=1&difficulty=easy`, `up, up, up, up, up, up` reached `won` at tick 6 with one crossing and score 100.
-- With the same preset, `up, up, right, up, up, up` reached `lost` at tick 6 with zero lives.
-- An additional move after loss left the state unchanged; R restored three lives, zero crossings, zero score, tick 0, and active status.
+- The 9×7 board, five directed lanes, player, HUD, and keyboard controls rendered.
+- Space advanced the tick without moving the player.
+- The combined invalid query showed all three invalid field names and used the default configuration.
+- With `crossingsToWin=1&difficulty=easy`, six up moves reached `won` at tick 6, and `up, up, right, up, up, up` reached `lost` at tick 6.
+- A move after the loss changed nothing. R restored the initial state.
 
-Browser screenshots of the initial board and win overlay were captured in the Codex QA run. The accessible state text above is retained here so the evidence remains reviewable without the temporary browser tab.
+Screenshots from that run were not saved. On 2026-09-23 the baseline board was re-captured from tag `s003-baseline-v1` in a separate worktree, with the same method as Part 1: [`baseline-active-normal.png`](evidence/baseline-active-normal.png). It shows the light baseline theme and the E4 problem below. That run also logged the favicon 404 that was later fixed in `d42607f`.
 
-### Accessibility and visual checks
+E1–E3 passed on the baseline with their expectations unchanged. After the tag was created, the vehicle-length presentation problem below was selected as E4.
 
-- The UI uses no animation or timer.
-- The focused Canvas has a visible 5 px outline.
-- Relevant measured contrast ratios were 12.97:1 for primary text/background, 5.63:1 for secondary text/background, 9.42:1 for error text/background, and 6.79:1 for focus/surface.
-- The layout was visually inspected in the in-app browser; a dedicated automated accessibility audit was not added because it would require new tooling outside the approved stack.
-
-### Baseline eval status
-
-E1, E2, and E3 passed with their original expectations unchanged. Full results are in `docs/EVALS.md`. After tag `s003-baseline-v1` was created, the reproducible vehicle-length presentation problem below was selected as E4.
-
-## Controlled change hypothesis
+## Controlled change — E4 vehicle length (2026-09-22, `c154822`)
 
 **Claim:** Baseline traffic logic correctly occupies multiple cells, but the Canvas presentation does not make configured vehicle length visually legible.
 
-**Signal:** In the baseline normal-preset screenshot, every occupied cell is drawn as an inset rounded rectangle with its own windshield. Adjacent cells belonging to one length-two vehicle look like separate cars.
+**Signal:** In the baseline normal preset, every occupied cell is drawn as a separate rounded rectangle with its own windshield, so one length-two vehicle looks like two cars ([`baseline-active-normal.png`](evidence/baseline-active-normal.png), rows 2 and 4).
 
 **Hypothesis:** Rendering occupied cells independently discards the identity and configured length of each vehicle.
 
-**Smallest change:** Keep game state, traffic timing, presets, config, input, and eval criteria unchanged. Change only the traffic rendering path so each configured vehicle is drawn as one contiguous body with one windshield, while preserving correct wrap-boundary segments.
+**Smallest change:** Game state, traffic timing, presets, config, input, and eval criteria stay unchanged. Only the traffic rendering path changes, so each configured vehicle is drawn as one contiguous body with one windshield while wrap-boundary segments stay correct.
 
 **Check:** Repeat unchanged E1–E4, all automated checks, and visual inspection of normal-preset length-two vehicles.
 
-**Result:** Supported. The post-change renderer displayed contiguous length-two bodies with one windshield while unchanged E1–E3 and the full automated suite remained green.
+**Result at that time:** Supported. Length-two vehicles became contiguous bodies with one windshield, E1–E3 stayed green, and 6 files / 40 tests passed.
 
-**Limitation:** The check assesses legibility of fixed geometric vehicles, not animation, sprites, or visual effects, which remain out of scope.
+**Later correction:** That visual check missed that normal-preset row 4 had two permanently overlapping vehicles, which hid one windshield. This is fixed in `7c172e7` (see below).
 
-### Controlled change result
+**Limitation:** The check assesses the legibility of fixed geometric vehicles, not animation, sprites, or visual effects.
 
-The renderer now groups each configured vehicle's cells into contiguous visible segments and places a single windshield on its directional front. Traffic calculation, turn rules, configuration, presets, input mapping, and eval expectations were unchanged.
+## Voxel Night City redesign (2026-09-23, `ddcb519`)
 
-Post-change results:
+The pair approved original generated bitmap decoration and discrete non-essential motion as a visual-only scope exception, recorded in `AI_USAGE_LOG.md` and specified in `specs/002-voxel-night-city/`. At that time typecheck, 6 files / 40 tests, and build passed. `npm audit` returned no result because the npm advisory endpoint failed, so no clean audit was claimed. Its current visual acceptance is covered by Part 1.
 
-| Check | Result |
-|---|---|
-| E1 deterministic play | PASS — unchanged 100-run normal-preset test |
-| E2 boundary turn | PASS — unchanged boundary test |
-| E3 invalid configuration | PASS — unchanged automated suite and repeated browser fallback |
-| E4 vehicle length legibility | PASS — contiguous length-two bodies with one windshield verified in browser |
-| `npm run typecheck` | PASS |
-| `npm run test:run` | PASS — six files, 40 tests |
-| `npm run build` | PASS — 13 modules transformed |
-| `npm audit --audit-level=high` | PASS — zero vulnerabilities |
+## Corrections after the first review (2026-09-23)
 
-The hypothesis was supported: preserving per-vehicle identity in the render path fixed the visible-length problem without changing game state or rule outcomes.
+- **Delivery:** `main` still pointed to `434bd56`, so the reviewer saw only the starter. The feature work was fast-forwarded into `main`, and D1–D8 were ticked with evidence references (`de1ae5e`).
+- **Restart hint contrast (`6ecab87`):** the redesign made `COLORS.surface` dark, which left `PRESS R TO RESTART` at 1.00–1.40:1 on the end overlay. It now uses `#f5f7ff`. Screenshots for D5/D6 were first saved in this commit.
+- **Runtime pin (`327eefe`):** `.nvmrc` and `engines` for Node 24 / npm 11.
+
+## Corrections after the second review (2026-09-23)
+
+| Review item | Commit | Change and check |
+|---|---|---|
+| Loss overlay said `RUSH HOUR WINS` | `2fa8f25` | Test written first; it failed because the module did not exist. Overlay text now comes from the Canvas-free `getEndStateMessage(status)`: `won` → `CITY CROSSED!`, `lost` → `GAME OVER`, `active` → none. |
+| README said Node 22.12 | `73482f5` | README requires Node 24+ / npm 11+ and uses `npm ci`. |
+| `002` spec marked Draft | `ddbf546` | `001` Accepted — core game; `002` Accepted — visual addendum. |
+| Audit results out of date | `3dd2de1` | Audit re-run; historical and current results separated in `security.md`. |
+| No root instruction file | `fb3de4e` | `AGENTS.md` added. |
+
+## Consistency pass (2026-09-23)
+
+Re-running every check against the current code found two more defects. Each was fixed as its own small change before this evidence was recorded:
+
+- **Overlapping vehicles (`7c172e7`):** in the normal preset, row 4 (length 2, starts `[0, 4, 8]`) had the vehicle at 8 wrap into column 0 in all 200 checked ticks. It overlapped the vehicle at 0 and hid its windshield. A new test in `tests/presets.test.ts` requires that no two vehicles of a lane share a cell in any preset through tick 199. It failed for normal row 4 (`expected 5 to be 6`). The starts became `[0, 3, 6]`, which occupy 6 of 9 columns, so the lane is never blocked. E1 does not enter row 4 and is unaffected.
+- **Startup console error and landmarks (`d42607f`):** every page load logged `404 /favicon.ico`, which contradicted D1. `index.html` now declares an empty icon. The `#app` root was a `<main>` that received a second `<main>`; it is now a `<div>`.
 
 ## Git preservation
 
-- Initial project checkpoint: `11f731b`
-- Constitution checkpoint: `434bd56`
-- Functional baseline: `8091482`
-- Immutable annotated baseline tag: `s003-baseline-v1`
+| Point | Commit |
+|---|---|
+| Initial project | `11f731b` |
+| Constitution | `434bd56` |
+| Functional baseline, annotated tag `s003-baseline-v1` | `8091482` |
+| E4 controlled change | `c154822` |
+| Voxel Night City redesign | `ddcb519` |
+| Code verified in Part 1 | `d42607f` |
 
 ## Partner contributions
 
@@ -128,75 +213,10 @@ The hypothesis was supported: preserving per-vehicle identity in the render path
 - **Driver: Aleksa** — implemented the E4 Canvas correction that groups vehicle cells into one vehicle body and ran typecheck, tests, build, audit, and E1–E4.
 - **Observer: Igor** — wrote and reviewed the Claim/Signal/Hypothesis/Smallest change/Check record, verified that the diff was limited to the render path, and confirmed that E1–E3 did not change.
 
-### Demonstration and known limitations
+### After the reviews (23 September 2026)
 
-- **Demonstration lead**: Aleksa. He will explain scope and `GAME_SPEC.md`, baseline → hypothesis → controlled change, runtime configuration validation and evals, and remaining limitations.
-- Visual motion is deliberately limited so the game remains turn-based.
-- Visual review is manual; no automated screenshot-test suite was added.
+- **Aleksa** — decided on and approved each post-review correction listed above, carried out with an AI coding assistant, as recorded in `AI_USAGE_LOG.md`.
 
-## Voxel Night City redesign — initial check
+### Demonstration
 
-The pair approved the original optional bitmap decoration and discrete non-essential motion as a visual-only scope exception; the decision is recorded in `AI_USAGE_LOG.md`. On 2026-09-23 the active desktop screen was checked in the browser: the Voxel Night City backdrop, title, HUD, board, traffic, player, and keyboard controls were visible; the accessible Canvas description reported the live game state. `npm run typecheck`, `npm run test:run` (40/40), and `npm run build` passed after the redesign. Narrow viewport, reduced-motion, invalid-configuration, and end-state redesign checks remain pending and must not be claimed as complete yet. The audit endpoint did not return a vulnerability result during the redesign validation.
-
-> Historical note: the checks listed above as pending were completed and are recorded in *Final runtime checks — 2026-09-23* below. The specification `specs/002-voxel-night-city/spec.md` is now marked Accepted — visual addendum.
-
-### Final runtime checks — 2026-09-23
-
-- At a 320×800 browser viewport, the full board and keyboard controls were visible with no horizontal page overflow.
-- The invalid URL `?lives=0&crossingsToWin=11&difficulty=insane` displayed all three invalid field names and retained the default active game state.
-- With `crossingsToWin=1&difficulty=easy`, six `W` actions produced `won`, one crossing, score 100, and tick 6.
-- With the same configuration, `W, W, D, W, W, W` produced `lost`, zero lives, and tick 6.
-- The CSS contains a `prefers-reduced-motion: reduce` branch that removes the non-essential visual transition and turn flash. This was source-inspected; an operating-system reduced-motion toggle was not available in this QA run.
-- Measured color contrasts: primary text/background 17.01:1, secondary/focus treatment on surface 8.82:1, and accent/background 11.77:1.
-- Repeated automated checks: typecheck PASS; Vitest PASS (6 files, 40 tests); production build PASS. `npm audit --audit-level=high` did not return a result because the npm advisory endpoint failed; no clean audit result is claimed.
-
-## Saved screenshots and restart-hint fix — 2026-09-23
-
-After the Session 003 review, the pair's GitHub `main` branch was fast-forwarded to the feature work (it had remained at the constitution commit), and D5/D6 screenshots were captured and saved in the repository. Screenshots were taken with headless Chrome at 1280×1000, with reduced motion enabled so that the turn flash does not affect the image.
-
-**Problem found while capturing:** on the win and loss overlays, the `PRESS R TO RESTART` hint was practically invisible. The Voxel Night City redesign changed `COLORS.surface` to dark `#0d2345`, but the overlay hint still used it. Measured contrast against the overlay was 1.00–1.40:1. `GAME_SPEC.md` requires the win/loss message to include the restart hint. The earlier browser checks read state from the Canvas accessible description and did not catch this visual regression.
-
-**Change:** only `src/render/canvas.ts` changed. The hint now uses the existing light `COLORS.playerDetail` (`#f5f7ff`). Measured contrast against the overlay is now 10.45–14.87:1 (across every lane and vehicle colour under the overlay). Game state, rules, configuration, and evals are unchanged.
-
-| Check | Result |
-|---|---|
-| `npm run typecheck` | PASS |
-| `npm run test:run` | PASS — six files, 40 tests |
-| `npm run build` | PASS |
-
-| Screenshot | Query and actions | Observed state |
-|---|---|---|
-| [`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png) | `?lives=0&crossingsToWin=11&difficulty=insane` | Alert names `lives, crossingsToWin, difficulty`; defaults active (3 lives, 0/3, tick 0) |
-| [`evidence/d6-win.png`](evidence/d6-win.png) | `?crossingsToWin=1&difficulty=easy`, `W ×6` | `won`, 3 lives, 1/1, score 100, tick 6; restart hint visible |
-| [`evidence/d6-loss.png`](evidence/d6-loss.png) | `?crossingsToWin=1&difficulty=easy`, `W W D W W W` | `lost`, 0 lives, 0/1, tick 6; restart hint visible |
-
-The console showed no errors at startup.
-
-## Post-review corrections — 2026-09-23
-
-The second review (score 8/10) listed five corrections. Each is recorded below with its actual result.
-
-### Loss message contradicted the lost status
-
-**Problem:** The loss overlay showed `RUSH HOUR WINS`, which reads like a win and contradicts the `lost` status. The text had been present since the baseline (`8091482`). Existing tests checked the status only, and browser checks read the accessible description, so no check covered the visible overlay text.
-
-**Change:** A test was written first. `tests/end-message.test.ts` failed because `src/render/end-message.ts` did not exist. The overlay text now comes from a pure, Canvas-free `getEndStateMessage(status)`: `won` gives `CITY CROSSED!`, `lost` gives `GAME OVER`, `active` gives no message, and both end states include `PRESS R TO RESTART`. `src/render/canvas.ts` only draws what that function returns. Game rules, configuration, presets, and evals are unchanged.
-
-| Check | Result |
-|---|---|
-| New test before the module existed | FAIL — module not found (expected) |
-| `npm run typecheck` | PASS |
-| `npm run test:run` | PASS — seven files, 43 tests |
-| `npm run build` | PASS |
-| [`evidence/d6-loss.png`](evidence/d6-loss.png) re-captured | `lost`, 0 lives, tick 6; overlay reads `GAME OVER` and `PRESS R TO RESTART` |
-| [`evidence/d6-win.png`](evidence/d6-win.png), [`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png) re-captured | Unchanged states: `won` with `CITY CROSSED!`; invalid-field alert with defaults |
-
-### Current dependency audit
-
-Earlier audit rows in this document are historical and describe the dependency graph on their own date: 2026-09-22 passed, and the 2026-09-23 redesign validation returned no result. The current check on `main` is:
-
-| Command | Date | Exit | Result |
-|---|---|---:|---|
-| `npm audit --audit-level=high` | 2026-09-23 | 0 | 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
-
-`security.md` records the same result in a table that separates historical results from the current check.
+- **Demonstration lead:** Aleksa. He will explain scope and `GAME_SPEC.md`, baseline → hypothesis → controlled change, runtime configuration validation and evals, and the remaining limitations.

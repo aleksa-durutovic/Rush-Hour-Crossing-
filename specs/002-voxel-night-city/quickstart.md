@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-- Install project dependencies with `npm install`.
+- Node.js 24 or newer and npm 11 or newer (`.nvmrc`, `package.json` `engines`).
+- Install project dependencies with `npm ci`.
 
 ## Automated regression validation
 

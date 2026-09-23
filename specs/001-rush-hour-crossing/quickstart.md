@@ -2,13 +2,12 @@
 
 ## Prerequisites
 
-- Node.js 22.12 or newer
-- npm
+- Node.js 24 or newer and npm 11 or newer (`.nvmrc`, `package.json` `engines`)
 - A modern desktop browser and keyboard
 
 ## Setup and automated checks
 
-1. Run `npm install` from the repository root.
+1. Run `npm ci` from the repository root.
 2. Run `npm run typecheck` and expect a successful exit with no diagnostics.
 3. Run `npm run test:run` and expect every test to pass.
 4. Run `npm run build` and expect a successful Vite production build.
