@@ -116,4 +116,34 @@ The hypothesis was supported: preserving per-vehicle identity in the render path
 
 ## Partner contributions
 
-The two students' names, driver/observer role rotation, and concrete contributions must be supplied by the pair. They are intentionally not inferred from repository metadata or AI activity.
+### Block 1 — Specification and baseline (F1–F7, 15–19 September 2026)
+
+- **Driver: Igor** — wrote prompts and code; specified `GAME_SPEC.md` rules R1–R7, ran the Spec Kit specification/plan/task workflow, and implemented the test-first baseline (`turn.ts`, `traffic.ts`, and presets).
+- **Observer: Aleksa** — recorded E1–E3 expectations before implementation, reviewed each diff against R1–R7 and the `GAME_SPEC.md` boundaries, and guarded against scope expansion.
+
+### Role switch — after baseline (F7 → F8, 19 September 2026)
+
+### Block 2 — Eval and controlled change (F8–F10, 19–22 September 2026)
+
+- **Driver: Aleksa** — implemented the E4 Canvas correction that groups vehicle cells into one vehicle body and ran typecheck, tests, build, audit, and E1–E4.
+- **Observer: Igor** — wrote and reviewed the Claim/Signal/Hypothesis/Smallest change/Check record, verified that the diff was limited to the render path, and confirmed that E1–E3 did not change.
+
+### Demonstration and known limitations
+
+- **Demonstration lead**: Aleksa. He will explain scope and `GAME_SPEC.md`, baseline → hypothesis → controlled change, runtime configuration validation and evals, and remaining limitations.
+- Visual motion is deliberately limited so the game remains turn-based.
+- Visual review is manual; no automated screenshot-test suite was added.
+
+## Voxel Night City redesign — in progress
+
+The pair approved the original optional bitmap decoration and discrete non-essential motion as a visual-only scope exception; the decision is recorded in `AI_USAGE_LOG.md`. On 2026-09-23 the active desktop screen was checked in the browser: the Voxel Night City backdrop, title, HUD, board, traffic, player, and keyboard controls were visible; the accessible Canvas description reported the live game state. `npm run typecheck`, `npm run test:run` (40/40), and `npm run build` passed after the redesign. Narrow viewport, reduced-motion, invalid-configuration, and end-state redesign checks remain pending and must not be claimed as complete yet. The audit endpoint did not return a vulnerability result during the redesign validation.
+
+### Final runtime checks — 2026-09-23
+
+- At a 320×800 browser viewport, the full board and keyboard controls were visible with no horizontal page overflow.
+- The invalid URL `?lives=0&crossingsToWin=11&difficulty=insane` displayed all three invalid field names and retained the default active game state.
+- With `crossingsToWin=1&difficulty=easy`, six `W` actions produced `won`, one crossing, score 100, and tick 6.
+- With the same configuration, `W, W, D, W, W, W` produced `lost`, zero lives, and tick 6.
+- The CSS contains a `prefers-reduced-motion: reduce` branch that removes the non-essential visual transition and turn flash. This was source-inspected; an operating-system reduced-motion toggle was not available in this QA run.
+- Measured color contrasts: primary text/background 17.01:1, secondary/focus treatment on surface 8.82:1, and accent/background 11.77:1.
+- Repeated automated checks: typecheck PASS; Vitest PASS (6 files, 40 tests); production build PASS. `npm audit --audit-level=high` did not return a result because the npm advisory endpoint failed; no clean audit result is claimed.

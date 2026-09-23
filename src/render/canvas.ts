@@ -8,16 +8,7 @@ export const CANVAS_WIDTH = GRID_COLUMNS * CELL_SIZE
 export const CANVAS_HEIGHT = GRID_ROWS * CELL_SIZE + HUD_HEIGHT
 
 const COLORS = {
-  ink: '#17212b',
-  surface: '#f7fbfa',
-  goal: '#6fcf97',
-  start: '#9dc7c8',
-  roadA: '#44515d',
-  roadB: '#394650',
-  laneMark: '#dce8e5',
-  player: '#ffe66d',
-  playerDetail: '#17212b',
-  vehicles: ['#f45b4f', '#65b8d0', '#f29e4c', '#9b7ede', '#e76f9a'],
+  ink: '#031027', surface: '#0d2345', goal: '#2f9d5b', start: '#1e6a75', roadA: '#26364f', roadB: '#1d2c43', laneMark: '#ffc83d', player: '#ff8d32', playerDetail: '#f5f7ff', vehicles: ['#ff5a5f', '#27c7df', '#ffc83d', '#9b65e5', '#36c884'],
 } as const
 
 export function configureCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
@@ -47,13 +38,14 @@ function drawHud(context: CanvasRenderingContext2D, state: GameState, config: Ga
   context.fillStyle = COLORS.surface
   context.fillRect(0, 0, CANVAS_WIDTH, HUD_HEIGHT)
   context.fillStyle = COLORS.ink
-  context.font = '700 18px Consolas, monospace'
+  context.font = '800 16px Consolas, monospace'
   context.textBaseline = 'middle'
-  context.fillText(`LIVES ${state.lives}`, 20, 26)
-  context.fillText(`CROSSINGS ${state.crossings}/${config.crossingsToWin}`, 172, 26)
-  context.fillText(`SCORE ${state.score}`, 410, 26)
+  context.fillStyle = '#f5f7ff'
+  context.fillText(`♥ LIVES ${state.lives}`, 18, 25)
+  context.fillText(`⚑ CROSS ${state.crossings}/${config.crossingsToWin}`, 166, 25)
+  context.fillText(`★ SCORE ${state.score}`, 408, 25)
   context.font = '700 12px Consolas, monospace'
-  context.fillStyle = '#315f68'
+  context.fillStyle = '#57d3e5'
   context.fillText(`TICK ${state.tick}  ·  ${config.difficulty.toUpperCase()} TRAFFIC`, 20, 54)
 }
 
@@ -66,6 +58,7 @@ function drawBoard(
     const y = HUD_HEIGHT + row * CELL_SIZE
     context.fillStyle = row === 0 ? COLORS.goal : row === 6 ? COLORS.start : row % 2 ? COLORS.roadA : COLORS.roadB
     context.fillRect(0, y, CANVAS_WIDTH, CELL_SIZE)
+    if (row === 0 || row === 6) { context.fillStyle = 'rgba(255,255,255,.12)'; for(let x=0;x<CANVAS_WIDTH;x+=CELL_SIZE){context.fillRect(x+3,y+3,CELL_SIZE-6,CELL_SIZE-6)} }
 
     if (row > 0 && row < 6) {
       context.strokeStyle = COLORS.laneMark
@@ -120,6 +113,10 @@ function drawVehicles(
         const y = HUD_HEIGHT + lane.row * CELL_SIZE + 12
         const width = group.length * CELL_SIZE - 10
         context.fillStyle = COLORS.vehicles[laneIndex % COLORS.vehicles.length]
+        roundedRect(context, x, y + 5, width, CELL_SIZE - 24, 8)
+        context.fillStyle = '#031027'
+        context.fill()
+        context.fillStyle = COLORS.vehicles[laneIndex % COLORS.vehicles.length]
         roundedRect(context, x, y, width, CELL_SIZE - 24, 8)
         context.fill()
 
@@ -152,6 +149,10 @@ function drawPlayer(context: CanvasRenderingContext2D, state: GameState): void {
   const x = state.player.x * CELL_SIZE + 14
   const y = HUD_HEIGHT + state.player.y * CELL_SIZE + 10
   context.fillStyle = COLORS.player
+  context.fillStyle = '#031027'
+  roundedRect(context, x, y + 5, CELL_SIZE - 28, CELL_SIZE - 20, 10)
+  context.fill()
+  context.fillStyle = COLORS.player
   roundedRect(context, x, y, CELL_SIZE - 28, CELL_SIZE - 20, 10)
   context.fill()
   context.fillStyle = COLORS.playerDetail
@@ -166,11 +167,11 @@ function drawEndState(context: CanvasRenderingContext2D, state: GameState): void
 
   context.fillStyle = 'rgba(23, 33, 43, 0.84)'
   context.fillRect(0, HUD_HEIGHT, CANVAS_WIDTH, GRID_ROWS * CELL_SIZE)
-  context.fillStyle = state.status === 'won' ? COLORS.goal : '#ff8a80'
+  context.fillStyle = state.status === 'won' ? '#ffc83d' : '#ff6b63'
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.font = '800 42px Trebuchet MS, sans-serif'
-  context.fillText(state.status === 'won' ? 'CROSSING COMPLETE' : 'RUSH HOUR WINS', CANVAS_WIDTH / 2, 290)
+  context.fillText(state.status === 'won' ? 'CITY CROSSED!' : 'RUSH HOUR WINS', CANVAS_WIDTH / 2, 290)
   context.fillStyle = COLORS.surface
   context.font = '700 18px Consolas, monospace'
   context.fillText('PRESS R TO RESTART', CANVAS_WIDTH / 2, 338)

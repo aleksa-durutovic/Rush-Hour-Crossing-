@@ -1,14 +1,14 @@
 {
   "color": {
-    "background": "#DCE8E5",
-    "surface": "#F7FBFA",
-    "text": "#17212B",
-    "accent": "#F45B4F",
-    "secondary": "#315F68",
-    "warning": "#A63D35"
+    "background": "#07152D",
+    "surface": "#0D2345",
+    "text": "#F5F7FF",
+    "accent": "#FFC83D",
+    "secondary": "#57D3E5",
+    "warning": "#FF6B63"
   },
   "type": {
-    "display": "Trebuchet MS, Segoe UI, sans-serif",
+    "display": "Arial Black, Impact, sans-serif",
     "body": "Trebuchet MS, Segoe UI, sans-serif",
     "utility": "Consolas, monospace",
     "scale_ratio": 1.25
@@ -18,7 +18,7 @@
     "max_width": "960px",
     "spacing_scale": [4, 8, 12, 16, 24, 32, 48, 64]
   },
-  "voice": "Clear traffic-control language with short, calm instructions.",
-  "signature_element": "Bold offset road-sign shadow used only around the game frame.",
+  "voice": "Direct arcade traffic-control language with short, energetic instructions.",
+  "signature_element": "Midnight city frame with amber lane-light highlights around the playable board.",
   "css_architecture": "cascade-layers"
 }

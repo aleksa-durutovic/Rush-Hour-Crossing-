@@ -16,10 +16,10 @@ app.innerHTML = `
   <main class="game-shell">
     <header class="game-header">
       <div>
-        <p class="game-header__eyebrow">Traffic control · turn based</p>
-        <h1>Rush Hour<br />Crossing</h1>
+        <p class="game-header__eyebrow">Turn-based night crossing</p>
+        <h1>Rush Hour <span>Crossing</span></h1>
       </div>
-      <p class="game-header__brief">Read the lane. Choose one square. Every move advances the rush.</p>
+      <p class="game-header__brief">Read the lane. Make one move. Every choice advances the rush.</p>
     </header>
 
     <p id="config-alert" class="config-alert" role="status" hidden></p>
@@ -69,6 +69,11 @@ window.addEventListener('keydown', (event) => {
 
 function render(): void {
   renderGame(context, state, config, lanes)
+  const frame = canvas.closest<HTMLElement>('.board-frame')
+  frame?.classList.remove('turn-flash')
+  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    requestAnimationFrame(() => frame?.classList.add('turn-flash'))
+  }
   canvas.setAttribute(
     'aria-label',
     `Rush Hour Crossing. ${state.lives} lives, ${state.crossings} of ${config.crossingsToWin} crossings, score ${state.score}, tick ${state.tick}, status ${state.status}.`,
