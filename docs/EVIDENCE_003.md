@@ -190,3 +190,13 @@ The second review (score 8/10) listed five corrections. Each is recorded below w
 | `npm run build` | PASS |
 | [`evidence/d6-loss.png`](evidence/d6-loss.png) re-captured | `lost`, 0 lives, tick 6; overlay reads `GAME OVER` and `PRESS R TO RESTART` |
 | [`evidence/d6-win.png`](evidence/d6-win.png), [`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png) re-captured | Unchanged states: `won` with `CITY CROSSED!`; invalid-field alert with defaults |
+
+### Current dependency audit
+
+Earlier audit rows in this document are historical and describe the dependency graph on their own date: 2026-09-22 passed, and the 2026-09-23 redesign validation returned no result. The current check on `main` is:
+
+| Command | Date | Exit | Result |
+|---|---|---:|---|
+| `npm audit --audit-level=high` | 2026-09-23 | 0 | 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
+
+`security.md` records the same result in a table that separates historical results from the current check.
