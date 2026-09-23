@@ -51,7 +51,7 @@ One of move up, move down, move left, move right, or wait. Restart is handled as
 | vehicleLength | Positive integer smaller than grid width |
 | vehicleStarts | Fixed list of starting columns |
 
-Occupied cells are derived, not stored in GameState. Vehicle bodies wrap horizontally and a preset is invalid if any lane occupies all nine columns during ticks 0 through 199.
+Occupied cells are derived, not stored in GameState. Vehicle bodies wrap horizontally and a preset is invalid if any lane occupies all nine columns during ticks 0 through 199, or if two vehicles of one lane share a cell during those ticks (added after the second review; tested in `tests/presets.test.ts`).
 
 ## DifficultyPreset
 
