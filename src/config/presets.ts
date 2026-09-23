@@ -12,7 +12,7 @@ export const DIFFICULTY_PRESETS: Readonly<Record<Difficulty, readonly LaneDefini
     lane(1, 'right', 1, 1, [0, 3, 6]),
     lane(2, 'left', 2, 2, [1, 6]),
     lane(3, 'right', 1, 1, [1, 4, 7]),
-    lane(4, 'left', 2, 2, [0, 3, 6]),
+    lane(4, 'left', 2, 2, [0, 4, 8]),
     lane(5, 'right', 1, 1, [2, 5, 8]),
   ],
   hard: [

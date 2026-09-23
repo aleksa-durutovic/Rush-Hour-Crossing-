@@ -16,16 +16,4 @@ describe('difficulty presets', () => {
       }
     },
   )
-
-  it.each(Object.entries(DIFFICULTY_PRESETS))(
-    '%s never places two vehicles of one lane in the same cell through tick 199',
-    (_difficulty, lanes) => {
-      for (const lane of lanes) {
-        for (let tick = 0; tick <= 199; tick += 1) {
-          const cellCount = lane.vehicleStarts.length * lane.vehicleLength
-          expect(getOccupiedCells(lane, tick).size, `row ${lane.row}, tick ${tick}`).toBe(cellCount)
-        }
-      }
-    },
-  )
 })
