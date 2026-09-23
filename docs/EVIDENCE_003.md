@@ -147,3 +147,25 @@ The pair approved the original optional bitmap decoration and discrete non-essen
 - The CSS contains a `prefers-reduced-motion: reduce` branch that removes the non-essential visual transition and turn flash. This was source-inspected; an operating-system reduced-motion toggle was not available in this QA run.
 - Measured color contrasts: primary text/background 17.01:1, secondary/focus treatment on surface 8.82:1, and accent/background 11.77:1.
 - Repeated automated checks: typecheck PASS; Vitest PASS (6 files, 40 tests); production build PASS. `npm audit --audit-level=high` did not return a result because the npm advisory endpoint failed; no clean audit result is claimed.
+
+## Saved screenshots and restart-hint fix — 2026-09-23
+
+After the Session 003 review, the pair's GitHub `main` branch was fast-forwarded to the feature work (it had remained at the constitution commit), and D5/D6 screenshots were captured and saved in the repository. Screenshots were taken with headless Chrome at 1280×1000, with reduced motion enabled so that the turn flash does not affect the image.
+
+**Problem found while capturing:** on the win and loss overlays, the `PRESS R TO RESTART` hint was practically invisible. The Voxel Night City redesign changed `COLORS.surface` to dark `#0d2345`, but the overlay hint still used it. Measured contrast against the overlay was 1.00–1.40:1. `GAME_SPEC.md` requires the win/loss message to include the restart hint. The earlier browser checks read state from the Canvas accessible description and did not catch this visual regression.
+
+**Change:** only `src/render/canvas.ts` changed. The hint now uses the existing light `COLORS.playerDetail` (`#f5f7ff`). Measured contrast against the overlay is now 10.45–14.87:1 (across every lane and vehicle colour under the overlay). Game state, rules, configuration, and evals are unchanged.
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | PASS |
+| `npm run test:run` | PASS — six files, 40 tests |
+| `npm run build` | PASS |
+
+| Screenshot | Query and actions | Observed state |
+|---|---|---|
+| [`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png) | `?lives=0&crossingsToWin=11&difficulty=insane` | Alert names `lives, crossingsToWin, difficulty`; defaults active (3 lives, 0/3, tick 0) |
+| [`evidence/d6-win.png`](evidence/d6-win.png) | `?crossingsToWin=1&difficulty=easy`, `W ×6` | `won`, 3 lives, 1/1, score 100, tick 6; restart hint visible |
+| [`evidence/d6-loss.png`](evidence/d6-loss.png) | `?crossingsToWin=1&difficulty=easy`, `W W D W W W` | `lost`, 0 lives, 0/1, tick 6; restart hint visible |
+
+The console showed no errors at startup.

@@ -130,9 +130,9 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - [x] **D4** Za sva tri difficulty preseta nijedna traka nije potpuno blokirana ni u jednom tick-u 0..199 (test).
   - Dokaz: `tests/presets.test.ts` → *never-blocked traffic lanes through tick 199* za `easy`, `normal` i `hard`.
 - [x] **D5** Validacija konfiguracije prihvata validne primere i odbija svih 5 nevalidnih primera iznad uz listu grešaka; pri nevalidnom ulazu igra koristi default i prikazuje poruku (test + screenshot).
-  - Dokaz: `tests/config.test.ts` (validan primer, svih 5 nevalidnih primera, kombinovani nevalidan upit); prikaz poruke u browseru zabeležen u `EVIDENCE_003.md` → *Browser evidence* i *Final runtime checks*. Screenshot je napravljen tokom QA, ali nije sačuvan u repou; zapis stanja je u evidence-u.
+  - Dokaz: `tests/config.test.ts` (validan primer, svih 5 nevalidnih primera, kombinovani nevalidan upit); screenshot `docs/evidence/d5-invalid-config.png`, opisan u `EVIDENCE_003.md` → *Saved screenshots and restart-hint fix*.
 - [x] **D6** Pobeda i poraz su dostižni odigravanjem (screenshot ili zapis).
-  - Dokaz (zapis): `EVIDENCE_003.md` → *Final runtime checks* — šest `W` poteza daje `won`, a `W, W, D, W, W, W` daje `lost` (`crossingsToWin=1&difficulty=easy`); u testovima `tests/turn.test.ts` i `tests/reachability.test.ts`.
+  - Dokaz: screenshotovi `docs/evidence/d6-win.png` (šest `W` → `won`) i `docs/evidence/d6-loss.png` (`W, W, D, W, W, W` → `lost`), sa `crossingsToWin=1&difficulty=easy`; testovi `tests/turn.test.ts` i `tests/reachability.test.ts`.
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
   - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`.
 - [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.

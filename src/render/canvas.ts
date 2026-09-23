@@ -172,7 +172,7 @@ function drawEndState(context: CanvasRenderingContext2D, state: GameState): void
   context.textBaseline = 'middle'
   context.font = '800 42px Trebuchet MS, sans-serif'
   context.fillText(state.status === 'won' ? 'CITY CROSSED!' : 'RUSH HOUR WINS', CANVAS_WIDTH / 2, 290)
-  context.fillStyle = COLORS.surface
+  context.fillStyle = COLORS.playerDetail
   context.font = '700 18px Consolas, monospace'
   context.fillText('PRESS R TO RESTART', CANVAS_WIDTH / 2, 338)
   context.textAlign = 'start'
