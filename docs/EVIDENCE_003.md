@@ -2,12 +2,12 @@
 
 This document has two parts:
 
-1. **Current state.** The only evidence that describes the project as it is now. Every result was produced on 2026-09-23 from the code at commit `d42607f`. Later commits change documentation and evidence files only.
+1. **Current state.** The only evidence that describes the project as it is now. Every result was produced on 2026-09-23 from the code at commit `26ae68b`. Later commits change documentation and evidence files only.
 2. **Development history.** The process record the assignment requires: F0, baseline, controlled change, and later corrections. Numbers in that part were true on their own date and are superseded by part 1.
 
 ---
 
-# Part 1 — Current state (verified 2026-09-23, code at `d42607f`)
+# Part 1 — Current state (verified 2026-09-23, code at `26ae68b`)
 
 ## Environment
 
@@ -23,7 +23,7 @@ All commands were run in sequence from a clean `npm ci`, with no dev server runn
 |---|---:|---|
 | `npm ci` | 0 | Installed from `package-lock.json`; `found 0 vulnerabilities` |
 | `npm run typecheck` | 0 | `tsc --noEmit` completed without diagnostics |
-| `npm run test:run` | 0 | 7 test files, 46 tests passed |
+| `npm run test:run` | 0 | 7 test files, 43 tests passed |
 | `npm run build` | 0 | Vite 8.3.0, 14 modules transformed, production build completed |
 | `npm audit --audit-level=high` | 0 | 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
 
@@ -47,7 +47,7 @@ Method: a Vite dev server served the current `main`, and a scripted headless Chr
 | Restart (R7) | after the loss, R | 3 lives, 0/1, score 0, tick 0, `active` | — |
 | Reduced motion | `/`, Space, reduce | `.board-frame` has no `turn-flash` class; transition 0 s; filter and transform `none` | — |
 | Motion allowed | `/`, Space, no-preference | `turn-flash` applied: 0.18 s transition, `brightness(1.13)`, 2 px lift; turn state is identical | — |
-| E4 wrap case | `/`, Space ×2 (normal preset, tick 2) | Row-4 vehicle wrapping across columns 8 and 0 is drawn as two edge segments with one windshield in total | [`e4-wrap-normal-tick2.png`](evidence/e4-wrap-normal-tick2.png) |
+| E4 wrap case | `/`, Space ×4 (normal preset, tick 4) | Row-2 vehicle wrapping across columns 8 and 0 is drawn as two edge segments with one windshield in total. Row 4 in the same image shows the known overlap (see Known limitations) | [`e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png) |
 
 The operating-system reduced-motion setting was not toggled. The media feature was emulated through the DevTools protocol, which is what the CSS query reads.
 
@@ -74,7 +74,7 @@ Page text sits over the decorative backdrop and its darkening gradient. Those ra
 
 ## Evals
 
-E1–E4 were repeated against the current code and passed. The results are in [`EVALS.md`](EVALS.md) under **Current result**.
+E1–E3 were repeated against the current code and pass. E4 passes for every lane except normal-preset row 4 (see Known limitations). The results are in [`EVALS.md`](EVALS.md) under **Current result**.
 
 ## Definition of Done
 
@@ -90,6 +90,8 @@ D1–D8 in `docs/GAME_SPEC.md` link to the rows above and to the tests that prov
 - Visual acceptance uses scripted screenshots and manual review. There is no automated screenshot-comparison test.
 - Keyboard-focus behaviour was verified in the in-app browser. The saved focus image was produced headlessly with `focus({ focusVisible: true })`.
 - Contrast over the bitmap backdrop is measured against its base colour, not per pixel.
+- **Overlapping vehicles in normal row 4.** Starts `[0, 4, 8]` with length 2 make the vehicle at 8 wrap into column 0 in every tick, overlapping the vehicle at 0. One windshield is hidden and the pair looks like a three-cell body with a notch ([`active-desktop.png`](evidence/active-desktop.png), [`e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png)). Collisions and the lane rules are unaffected. A fix must keep the preset winnable. The first attempt (`[0, 3, 6]`) made it unwinnable and was reverted (see Part 2).
+- **The hard preset cannot be won.** An exhaustive search over every reachable state (tick mod 54, player position, lives) found no winning path for `hard`. The player never survives the first lane, because four of five lanes have one-cell gaps and move every tick, so collision check B always hits. The same search found shortest wins of 6 moves for `easy` and 11 for `normal`. This has been true since the baseline. The search was a temporary probe and is not part of the committed test suite. `tests/reachability.test.ts` covers only `easy`.
 
 ---
 
@@ -156,7 +158,7 @@ E1–E3 passed on the baseline with their expectations unchanged. After the tag 
 
 **Result at that time:** Supported. Length-two vehicles became contiguous bodies with one windshield, E1–E3 stayed green, and 6 files / 40 tests passed.
 
-**Later correction:** That visual check missed that normal-preset row 4 had two permanently overlapping vehicles, which hid one windshield. This is fixed in `7c172e7` (see below).
+**Later correction:** That visual check missed that normal-preset row 4 had two permanently overlapping vehicles, which hid one windshield. It is still open (Part 1, Known limitations).
 
 **Limitation:** The check assesses the legibility of fixed geometric vehicles, not animation, sprites, or visual effects.
 
@@ -182,9 +184,9 @@ The pair approved original generated bitmap decoration and discrete non-essentia
 
 ## Consistency pass (2026-09-23)
 
-Re-running every check against the current code found two more defects. Each was fixed as its own small change before this evidence was recorded:
+Re-running every check against the current code found two more defects:
 
-- **Overlapping vehicles (`7c172e7`):** in the normal preset, row 4 (length 2, starts `[0, 4, 8]`) had the vehicle at 8 wrap into column 0 in all 200 checked ticks. It overlapped the vehicle at 0 and hid its windshield. A new test in `tests/presets.test.ts` requires that no two vehicles of a lane share a cell in any preset through tick 199. It failed for normal row 4 (`expected 5 to be 6`). The starts became `[0, 3, 6]`, which occupy 6 of 9 columns, so the lane is never blocked. E1 does not enter row 4 and is unaffected.
+- **Overlapping vehicles — attempted fix reverted (`7c172e7`, reverted in `26ae68b`):** in the normal preset, row 4 (length 2, starts `[0, 4, 8]`) had the vehicle at 8 wrap into column 0 in all 200 checked ticks, hiding one windshield. A test requiring that no two vehicles of a lane share a cell failed for normal row 4, and the starts were changed to `[0, 3, 6]`. The check covered only the non-blocking invariant, not passability. Three vehicles of length 2 leave one-cell gaps, and an exhaustive search later showed that no winning path existed for `normal`. The student noticed the denser lane in play. The change and its test were reverted, which restores the winnable `[0, 4, 8]` and the overlap limitation.
 - **Startup console error and landmarks (`d42607f`):** every page load logged `404 /favicon.ico`, which contradicted D1. `index.html` now declares an empty icon. The `#app` root was a `<main>` that received a second `<main>`; it is now a `<div>`.
 
 ## Git preservation
@@ -196,7 +198,8 @@ Re-running every check against the current code found two more defects. Each was
 | Functional baseline, annotated tag `s003-baseline-v1` | `8091482` |
 | E4 controlled change | `c154822` |
 | Voxel Night City redesign | `ddcb519` |
-| Code verified in Part 1 | `d42607f` |
+| Revert of the preset change | `26ae68b` |
+| Code verified in Part 1 | `26ae68b` |
 
 ## Partner contributions
 

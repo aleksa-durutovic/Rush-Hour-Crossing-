@@ -37,4 +37,11 @@
 - **Why AI was involved**: At the student's request, re-verify the whole project against the current code, remove stale evidence, and make the documentation consistent.
 - **Result**: The fresh checks exposed two defects: overlapping vehicles in normal-preset row 4 and a favicon 404 on every page load. They also exposed a nested `main` landmark and stale documentation claims (test counts, a 5 px focus outline, a 960 px max width, Node 22 in the quickstarts, and baseline screenshots that were never saved).
 - **Decisions recorded**: The student chose a test-first preset fix (`7c172e7`) over only documenting the problem. The console and landmark fix went in `d42607f`. `EVIDENCE_003.md` was restructured into *Current state* and *Development history*, and every current claim was re-measured.
-- **Verification signal**: A clean `npm ci`, typecheck, 7 files / 46 tests, build, and audit (0 vulnerabilities) pass. Scripted browser checks and screenshots were taken from code at `d42607f`, and the baseline board was re-captured from tag `s003-baseline-v1`.
+- **Verification signal (at that commit)**: A clean `npm ci`, typecheck, 7 files / 46 tests, build, and audit (0 vulnerabilities) pass. Scripted browser checks and screenshots were taken from code at `d42607f`, and the baseline board was re-captured from tag `s003-baseline-v1`.
+
+## Preset change reverted — 2026-09-23
+
+- **Why AI was involved**: The student noticed in play that normal row 4 had become denser after `7c172e7` and asked why.
+- **Result**: The row speed had not changed (`moveEveryTicks: 2` since the baseline). Starts `[0, 3, 6]` left one-cell gaps. An exhaustive search over reachable states (a temporary probe, not committed) found no winning path for `normal` after the change (11 moves before it), and none for `hard` since the baseline. The earlier check had covered only the non-blocking invariant, not passability.
+- **Decision recorded**: The student chose to remove the change. It was reverted in `26ae68b`, which restores the winnable `[0, 4, 8]`. The row-4 overlap and the unwinnable `hard` preset are recorded as known limitations in `EVIDENCE_003.md`, not fixed.
+- **Verification signal**: A clean `npm ci`, typecheck, 7 files / 43 tests, build, and audit (0 vulnerabilities) pass on `26ae68b`. Screenshots were re-captured from that code.

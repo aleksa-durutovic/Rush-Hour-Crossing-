@@ -1,6 +1,6 @@
 # Mini Eval Set — Session 003
 
-Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementation. Results must be appended without rewriting these expectations. **Current result** is the only result that describes the project now (2026-09-23, code at `d42607f`). Baseline and post-change results are the historical record.
+Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementation. Results must be appended without rewriting these expectations. **Current result** is the only result that describes the project now (2026-09-23, code at `26ae68b`). Baseline and post-change results are the historical record.
 
 ## E1 — Typical deterministic play
 
@@ -12,7 +12,7 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Post-change result:** PASS. The unchanged 100-run determinism test passed against the normal preset and the final tick remained 6.
 
-**Current result:** PASS. The unchanged 100-run determinism test in `tests/turn.test.ts` passes. The final state is tick 6, player `(5, 6)`, 1 life, 0 crossings, status `active`. The sequence only enters rows 5 and 6, so the row-4 preset correction in `7c172e7` does not affect this case.
+**Current result:** PASS. The unchanged 100-run determinism test in `tests/turn.test.ts` passes. The final state is tick 6, player `(5, 6)`, 1 life, 0 crossings, status `active`. The sequence only enters rows 5 and 6. The normal preset is the same as in the baseline.
 
 ## E2 — Grid boundary consumes a turn
 
@@ -50,6 +50,6 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Post-change result:** PASS. Post-change browser inspection shows length-two vehicles as contiguous two-cell bodies with one directional windshield. The wrapped vehicle is split only by the physical board boundary and has one windshield across its two segments.
 
-**Correction to the post-change result:** that inspection missed normal-preset row 4. Starts `[0, 4, 8]` with length 2 made the vehicle at 8 wrap into column 0 and overlap the vehicle at 0 in every tick, which hid one windshield. It is fixed in `7c172e7`, and a preset test now forbids overlapping vehicles.
+**Correction to the post-change result:** that inspection missed normal-preset row 4. Starts `[0, 4, 8]` with length 2 made the vehicle at 8 wrap into column 0 and overlap the vehicle at 0 in every tick, which hid one windshield. A fix (`7c172e7`, starts `[0, 3, 6]`) removed the overlap but left one-cell gaps that made the normal preset unwinnable, so it was reverted in `26ae68b`. The overlap is still open.
 
-**Current result:** PASS. At tick 0 of the normal preset every configured vehicle is one contiguous body with one directional windshield, including three separate length-two vehicles in row 4 ([`evidence/active-desktop.png`](evidence/active-desktop.png)). At tick 2 the row-4 vehicle crossing the board edge is drawn as two edge segments with one windshield in total ([`evidence/e4-wrap-normal-tick2.png`](evidence/e4-wrap-normal-tick2.png)). For comparison, the baseline failure is re-captured from the tag in [`evidence/baseline-active-normal.png`](evidence/baseline-active-normal.png).
+**Current result:** PASS for every lane except normal-preset row 4, which FAILs. The renderer draws each configured vehicle as one contiguous body with one directional windshield ([`evidence/active-desktop.png`](evidence/active-desktop.png)). At tick 4 the row-2 vehicle crossing the board edge is drawn as two edge segments with one windshield in total ([`evidence/e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png)). In normal row 4, two configured vehicles occupy the same cell in every tick, so the pair looks like one three-cell body with a notch and one windshield is hidden. The cause is the preset data, not the renderer. It stays open until a change is found that removes the overlap and keeps the preset winnable. For comparison, the baseline failure is re-captured from the tag in [`evidence/baseline-active-normal.png`](evidence/baseline-active-normal.png).

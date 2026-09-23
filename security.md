@@ -33,7 +33,7 @@ Command: `npm audit --audit-level=high`
 
 | Kind | Date | Dependency graph | Result |
 |---|---|---|---|
-| Current check | 2026-09-23 | `main`, code at `d42607f`, after a clean `npm ci` | Exit 0; 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
+| Current check | 2026-09-23 | `main`, code at `26ae68b`, after a clean `npm ci` | Exit 0; 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
 | Historical | 2026-09-23 | Voxel Night City redesign validation | No result: the npm advisory endpoint failed; no clean audit claimed |
 | Historical | 2026-09-22 | Functional baseline and controlled change | Exit 0; zero vulnerabilities reported |
 
