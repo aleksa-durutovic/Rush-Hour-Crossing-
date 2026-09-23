@@ -106,7 +106,7 @@
 - [x] T030 Implement exactly one smallest corrective change in the single relevant source area identified by E4
 - [x] T031 Repeat unchanged E1–E4 and append post-change results to `docs/EVALS.md`
 - [x] T032 Re-run typecheck, full tests, build, and dependency audit and record actual results in `docs/EVIDENCE_003.md`
-- [ ] T033 Finalize `docs/EVIDENCE_003.md`, `docs/AI_USAGE_LOG.md`, `security.md`, and partner contribution notes without adding Session 004 work
+- [x] T033 Finalize `docs/EVIDENCE_003.md`, `docs/AI_USAGE_LOG.md`, `security.md`, and partner contribution notes without adding Session 004 work
 
 ---
 
