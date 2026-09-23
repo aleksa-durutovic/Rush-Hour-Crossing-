@@ -1,6 +1,7 @@
 import { GRID_COLUMNS, GRID_ROWS } from '../game/constants'
 import type { GameConfig, GameState, LaneDefinition } from '../game/state'
 import { getVehicleCells } from '../game/traffic'
+import { getEndStateMessage } from './end-message'
 
 export const CELL_SIZE = 64
 export const HUD_HEIGHT = 72
@@ -161,7 +162,8 @@ function drawPlayer(context: CanvasRenderingContext2D, state: GameState): void {
 }
 
 function drawEndState(context: CanvasRenderingContext2D, state: GameState): void {
-  if (state.status === 'active') {
+  const message = getEndStateMessage(state.status)
+  if (!message) {
     return
   }
 
@@ -171,10 +173,10 @@ function drawEndState(context: CanvasRenderingContext2D, state: GameState): void
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.font = '800 42px Trebuchet MS, sans-serif'
-  context.fillText(state.status === 'won' ? 'CITY CROSSED!' : 'RUSH HOUR WINS', CANVAS_WIDTH / 2, 290)
+  context.fillText(message.title, CANVAS_WIDTH / 2, 290)
   context.fillStyle = COLORS.playerDetail
   context.font = '700 18px Consolas, monospace'
-  context.fillText('PRESS R TO RESTART', CANVAS_WIDTH / 2, 338)
+  context.fillText(message.hint, CANVAS_WIDTH / 2, 338)
   context.textAlign = 'start'
 }
 

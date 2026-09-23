@@ -169,3 +169,22 @@ After the Session 003 review, the pair's GitHub `main` branch was fast-forwarded
 | [`evidence/d6-loss.png`](evidence/d6-loss.png) | `?crossingsToWin=1&difficulty=easy`, `W W D W W W` | `lost`, 0 lives, 0/1, tick 6; restart hint visible |
 
 The console showed no errors at startup.
+
+## Post-review corrections — 2026-09-23
+
+The second review (score 8/10) listed five corrections. Each is recorded below with its actual result.
+
+### Loss message contradicted the lost status
+
+**Problem:** The loss overlay showed `RUSH HOUR WINS`, which reads like a win and contradicts the `lost` status. The text had been present since the baseline (`8091482`). Existing tests checked the status only, and browser checks read the accessible description, so no check covered the visible overlay text.
+
+**Change:** A test was written first. `tests/end-message.test.ts` failed because `src/render/end-message.ts` did not exist. The overlay text now comes from a pure, Canvas-free `getEndStateMessage(status)`: `won` gives `CITY CROSSED!`, `lost` gives `GAME OVER`, `active` gives no message, and both end states include `PRESS R TO RESTART`. `src/render/canvas.ts` only draws what that function returns. Game rules, configuration, presets, and evals are unchanged.
+
+| Check | Result |
+|---|---|
+| New test before the module existed | FAIL — module not found (expected) |
+| `npm run typecheck` | PASS |
+| `npm run test:run` | PASS — seven files, 43 tests |
+| `npm run build` | PASS |
+| [`evidence/d6-loss.png`](evidence/d6-loss.png) re-captured | `lost`, 0 lives, tick 6; overlay reads `GAME OVER` and `PRESS R TO RESTART` |
+| [`evidence/d6-win.png`](evidence/d6-win.png), [`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png) re-captured | Unchanged states: `won` with `CITY CROSSED!`; invalid-field alert with defaults |

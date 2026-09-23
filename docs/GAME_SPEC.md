@@ -132,7 +132,7 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - [x] **D5** Validacija konfiguracije prihvata validne primere i odbija svih 5 nevalidnih primera iznad uz listu grešaka; pri nevalidnom ulazu igra koristi default i prikazuje poruku (test + screenshot).
   - Dokaz: `tests/config.test.ts` (validan primer, svih 5 nevalidnih primera, kombinovani nevalidan upit); screenshot `docs/evidence/d5-invalid-config.png`, opisan u `EVIDENCE_003.md` → *Saved screenshots and restart-hint fix*.
 - [x] **D6** Pobeda i poraz su dostižni odigravanjem (screenshot ili zapis).
-  - Dokaz: screenshotovi `docs/evidence/d6-win.png` (šest `W` → `won`) i `docs/evidence/d6-loss.png` (`W, W, D, W, W, W` → `lost`), sa `crossingsToWin=1&difficulty=easy`; testovi `tests/turn.test.ts` i `tests/reachability.test.ts`.
+  - Dokaz: screenshotovi `docs/evidence/d6-win.png` (šest `W` → `won`, „CITY CROSSED!“) i `docs/evidence/d6-loss.png` (`W, W, D, W, W, W` → `lost`, „GAME OVER“), sa `crossingsToWin=1&difficulty=easy`; testovi `tests/turn.test.ts`, `tests/reachability.test.ts` i `tests/end-message.test.ts` (tekst poruke odgovara statusu).
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
   - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`.
 - [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.
