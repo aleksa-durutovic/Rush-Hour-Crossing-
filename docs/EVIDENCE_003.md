@@ -134,9 +134,11 @@ The hypothesis was supported: preserving per-vehicle identity in the render path
 - Visual motion is deliberately limited so the game remains turn-based.
 - Visual review is manual; no automated screenshot-test suite was added.
 
-## Voxel Night City redesign — in progress
+## Voxel Night City redesign — initial check
 
 The pair approved the original optional bitmap decoration and discrete non-essential motion as a visual-only scope exception; the decision is recorded in `AI_USAGE_LOG.md`. On 2026-09-23 the active desktop screen was checked in the browser: the Voxel Night City backdrop, title, HUD, board, traffic, player, and keyboard controls were visible; the accessible Canvas description reported the live game state. `npm run typecheck`, `npm run test:run` (40/40), and `npm run build` passed after the redesign. Narrow viewport, reduced-motion, invalid-configuration, and end-state redesign checks remain pending and must not be claimed as complete yet. The audit endpoint did not return a vulnerability result during the redesign validation.
+
+> Historical note: the checks listed above as pending were completed and are recorded in *Final runtime checks — 2026-09-23* below. The specification `specs/002-voxel-night-city/spec.md` is now marked Accepted — visual addendum.
 
 ### Final runtime checks — 2026-09-23
 

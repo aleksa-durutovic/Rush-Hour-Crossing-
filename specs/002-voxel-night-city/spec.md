@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-23
 
-**Status**: Draft
+**Status**: Accepted — visual addendum (implemented on `main`; changes presentation only, not gameplay rules)
 
 **Input**: User description: "Redesign the entire Rush Hour Crossing interface as an original Voxel night city, using original generated bitmap decoration, discrete optional motion, and desktop/mobile plus active/end-state evidence."
 

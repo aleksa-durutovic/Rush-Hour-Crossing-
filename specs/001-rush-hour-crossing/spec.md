@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-22
 
-**Status**: Draft
+**Status**: Accepted — core game (implemented on `main`; baseline tag `s003-baseline-v1`)
 
 **Input**: User description: "Build the Session 003 Rush Hour Crossing game defined in `docs/GAME_SPEC.md`, without any Session 004 AI functionality or other out-of-scope mechanics."
 
