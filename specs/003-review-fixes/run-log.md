@@ -142,6 +142,7 @@ warning: unable to access 'C:\Users\AleksA/.config/git/ignore': Permission denie
 The status content matched §0. The two permission warnings were a sandbox limitation and do not change the T001 result; T001 is treated as passed per the student's instruction.
 
 - C5_SHA: d8c8466
+- C6_SHA: 4979208
 
 ### T044 — stopped at placeholder grep
 
