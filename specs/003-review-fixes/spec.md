@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-26
 
-**Status**: Draft — awaiting student review before implementation
+**Status**: Accepted — third-review corrections
 
 **Input**: Third review of the Session 003 submission (code at `26ae68b`, docs at `354295b`). The reviewer asked for: (1) a test-first fix of the overlapping vehicles in normal-preset row 4 that keeps the preset winnable, with both overlap and reachability regression tests; (2) a fix of the hard preset, which has no winning path, or a formal redefinition; (3) a Definition of Done that matches the current state; (4) an automated browser smoke test for startup, focus, win/loss lock, and restart; (5) current evidence regenerated from one commit after the corrections.
 

@@ -2,54 +2,52 @@
 
 This document has two parts:
 
-1. **Current state.** The only evidence that describes the project as it is now. Every result was produced on 2026-09-23 from the code at commit `26ae68b`. Later commits change documentation and evidence files only.
+1. **Current state.** The only evidence that describes the project as it is now. Every result was produced on 2026-09-26 from the code at commit `2c1b3b1`. Later commits change documentation and evidence files only.
 2. **Development history.** The process record the assignment requires: F0, baseline, controlled change, and later corrections. Numbers in that part were true on their own date and are superseded by part 1.
 
 ---
 
-# Part 1 — Current state (verified 2026-09-23, code at `26ae68b`)
+# Part 1 — Current state (verified 2026-09-26, code at `2c1b3b1`)
 
 ## Environment
 
-- Node.js `v24.14.0`, npm `11.12.1` (pinned by `.nvmrc` and `package.json` `engines`)
-- Vite `8.3.0`, TypeScript `7.0.2`, Vitest `5.0.1`
-- Windows 11, Google Chrome (headless, driven through the DevTools protocol) and the Claude desktop in-app browser
+- Node.js `24.14.0`, npm `11.12.1` (pinned by `.nvmrc` and `package.json` `engines`)
+- Vite `8.3.0`, TypeScript `7.0.2`, Vitest `5.0.1`, Playwright `1.63.0` with its bundled Chromium
+- Windows 11
 
 ## Automated checks
 
-All commands were run in sequence from a clean `npm ci`, with no dev server running.
+All commands were run in sequence from a clean `npm ci` on `2c1b3b1`, with no dev server running.
 
 | Command | Exit | Actual result |
 |---|---:|---|
 | `npm ci` | 0 | Installed from `package-lock.json`; `found 0 vulnerabilities` |
 | `npm run typecheck` | 0 | `tsc --noEmit` completed without diagnostics |
-| `npm run test:run` | 0 | 7 test files, 43 tests passed |
+| `npm run test:run` | 0 | 7 test files, 57 tests passed |
 | `npm run build` | 0 | Vite 8.3.0, 14 modules transformed, production build completed |
-| `npm audit --audit-level=high` | 0 | 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
+| `npm audit --audit-level=high` | 0 | 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 86 dependencies |
+| `npm run test:e2e` | 0 | 10 passed (Chromium, 1 worker) |
 
 ## Browser checks
 
-Method: a Vite dev server served the current `main`, and a scripted headless Chrome session loaded each URL in a fresh page, sent real key events, and read the page state. The viewport was 1280×1000 at device scale 1 with `prefers-reduced-motion: reduce`, unless a row says otherwise. Game state was read from the Canvas accessible description, which `src/main.ts` rebuilds after every turn.
+Method: `npm run test:e2e` (`e2e/smoke.pw.ts`) builds the game, serves the production build with `vite preview` on port 4173, and drives Playwright's Chromium with real key events. Viewport 1280×1000, device scale 1, `prefers-reduced-motion: reduce`. Game state is read from the Canvas accessible description, which `src/main.ts` rebuilds after every turn. Screenshots come from `npm run evidence:screenshots` (`e2e/evidence.pw.ts`) on the same code; each capture first asserts the state shown in the table.
 
-| Check | Input | Observed result | Screenshot |
+| Check | Input | Observed result | Test / Screenshot |
 |---|---|---|---|
-| Startup | `/` | No console errors or warnings; one `main` landmark; backdrop image loaded | — |
-| Active board, desktop | `/` | 3 lives, 0/3 crossings, score 0, tick 0, `active`; title, HUD, 9×7 board, five directed lanes, player, and keyboard controls visible | [`active-desktop.png`](evidence/active-desktop.png) |
-| Wait | `/`, Space | Tick 0 → 1, status `active` | — |
-| Out-of-grid move | `/`, S at the start row | Tick 0 → 1, 3 lives, status `active` (the position is covered by eval E2) | — |
-| Narrow viewport | `/` at 320×800 | `scrollWidth` 320 = `clientWidth` 320 (no horizontal overflow); board 286 px wide; controls fit within 320 px | [`active-narrow-320.png`](evidence/active-narrow-320.png) |
-| Keyboard focus | In-app browser: blur, then Tab | Tab focuses the Canvas; `:focus-visible` matches; outline `4px solid #ffc83d`, offset 6 px | [`keyboard-focus.png`](evidence/keyboard-focus.png) (headless capture with `focus({ focusVisible: true })`, which applies the same CSS rule) |
-| Valid configuration | `?lives=2&crossingsToWin=3&difficulty=hard` | 2 lives, 0/3, no alert | — |
-| Invalid configuration (D5) | `?lives=0&crossingsToWin=11&difficulty=insane` | Alert: `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.`; state uses defaults (3 lives, 0/3, tick 0, `active`) | [`d5-invalid-config.png`](evidence/d5-invalid-config.png) |
-| Win (D6) | `?crossingsToWin=1&difficulty=easy`, `W ×6` | `won`, 3 lives, 1/1, score 100, tick 6; overlay `CITY CROSSED!` + `PRESS R TO RESTART` | [`d6-win.png`](evidence/d6-win.png) |
-| Loss (D6) | same URL, `W W D W W W` | `lost`, 0 lives, 0/1, score 0, tick 6; overlay `GAME OVER` + `PRESS R TO RESTART` | [`d6-loss.png`](evidence/d6-loss.png) |
-| Input after loss (R7) | after the loss, W | State unchanged: `lost`, 0 lives, tick 6 | — |
-| Restart (R7) | after the loss, R | 3 lives, 0/1, score 0, tick 0, `active` | — |
-| Reduced motion | `/`, Space, reduce | `.board-frame` has no `turn-flash` class; transition 0 s; filter and transform `none` | — |
-| Motion allowed | `/`, Space, no-preference | `turn-flash` applied: 0.18 s transition, `brightness(1.13)`, 2 px lift; turn state is identical | — |
-| E4 wrap case | `/`, Space ×4 (normal preset, tick 4) | Row-2 vehicle wrapping across columns 8 and 0 is drawn as two edge segments with one windshield in total. Row 4 in the same image shows the known overlap (see Known limitations) | [`e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png) |
+| Startup (D1) | `/` | No console errors, warnings, or page errors; one `main` landmark; Canvas focused; no config alert; 3 lives, 0/3 crossings, score 0, tick 0, `active` | smoke 1; [`active-desktop.png`](evidence/active-desktop.png) |
+| Keyboard focus | `/`, click the title, Tab | Canvas focused; `:focus-visible` matches | smoke 2; [`keyboard-focus.png`](evidence/keyboard-focus.png) |
+| Wait (R2) | `/`, Space | Tick 0 → 1, status `active` | smoke 3 |
+| Invalid configuration (D5) | `?lives=0&crossingsToWin=11&difficulty=insane` | Alert `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.`; 3 lives, 0/3, tick 0, `active` | smoke 4; [`d5-invalid-config.png`](evidence/d5-invalid-config.png) |
+| Win, lock, restart — easy (D6, R7) | `?crossingsToWin=1&difficulty=easy`, `W ×6`, then ↑ Space ←, then R | `won`, 3 lives, 1/1, score 100, tick 6; extra keys change nothing; R → 3 lives, 0/1, tick 0, `active` | smoke 5; [`d6-win.png`](evidence/d6-win.png) |
+| Win, lock, restart — normal | `difficulty=normal`, ↑ → ↑ → ← ↑ ↑ Space Space ↑ ↑ | `won`, 3 lives, tick 11; lock and restart as above | smoke 7; [`d6-win-normal.png`](evidence/d6-win-normal.png) |
+| Win, lock, restart — hard | `difficulty=hard`, ↑ ↓ Space Space Space ← ↑ ↑ ↑ ↑ ← ← ← ↑ ↑ | `won`, 3 lives, tick 15; lock and restart as above | smoke 9; [`d6-win-hard.png`](evidence/d6-win-hard.png) |
+| Loss, lock, restart — easy | `difficulty=easy`, `W W D W W W`, then ↑ Space →, then R | `lost`, 0 lives, 0/1, tick 6; extra keys change nothing; R → tick 0, `active` | smoke 6; [`d6-loss.png`](evidence/d6-loss.png) |
+| Loss, lock, restart — normal | `difficulty=normal`, `W ×6` | `lost`, 0 lives, tick 6; lock and restart as above | smoke 8 |
+| Loss, lock, restart — hard | `difficulty=hard`, `W ×4` | `lost`, 0 lives, tick 4; lock and restart as above | smoke 10 |
+| Narrow viewport | `/` at 320×800 | `scrollWidth − clientWidth = 0` (no horizontal overflow) | evidence script; [`active-narrow-320.png`](evidence/active-narrow-320.png) |
+| E4 wrap case | `/`, Space ×4 (normal preset, tick 4) | Tick 4; the row-2 vehicle crossing columns 8 and 0 is drawn as two edge segments with one windshield; row 4 shows two separate vehicles | evidence script; [`e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png) |
 
-The operating-system reduced-motion setting was not toggled. The media feature was emulated through the DevTools protocol, which is what the CSS query reads.
+"Smoke N" is the N-th test in the order Playwright lists them (see `specs/003-review-fixes/contracts/browser-smoke.md`). Each screenshot was reviewed by the student (2026-09-26).
 
 ## Contrast
 
@@ -72,13 +70,15 @@ Ratios were computed with the WCAG 2 formula from the colours in `src/style.css`
 
 Page text sits over the decorative backdrop and its darkening gradient. Those ratios use the base background `#07152d`, not every pixel of the bitmap.
 
+`src/style.css`, `src/render/`, and `src/main.ts` are unchanged between `26ae68b` and `2c1b3b1` (`git diff` is empty), so these ratios still apply.
+
 ## Evals
 
-E1–E3 were repeated against the current code and pass. E4 passes for every lane except normal-preset row 4 (see Known limitations). The results are in [`EVALS.md`](EVALS.md) under **Current result**.
+E1–E4 were repeated against `2c1b3b1` and all pass, with no exception. The results are in [`EVALS.md`](EVALS.md) under **Current result**.
 
 ## Definition of Done
 
-D1–D8 in `docs/GAME_SPEC.md` link to the rows above and to the tests that prove them.
+D1–D8 in `docs/GAME_SPEC.md` link to the rows above and to the tests that prove them. D4 and D6 were extended after the third review: D4 now includes the no-overlap invariant, and D6 covers all three presets.
 
 ## Visual asset
 
@@ -87,11 +87,12 @@ D1–D8 in `docs/GAME_SPEC.md` link to the rows above and to the tests that prov
 
 ## Known limitations
 
-- Visual acceptance uses scripted screenshots and manual review. There is no automated screenshot-comparison test.
-- Keyboard-focus behaviour was verified in the in-app browser. The saved focus image was produced headlessly with `focus({ focusVisible: true })`.
+- Visual acceptance of the screenshots is a manual review by the student. There is no automated screenshot-comparison test.
+- The browser smoke test runs locally in Playwright's Chromium only. There is no CI and no other browser.
+- The reduced-motion and motion-allowed checks of the turn flash were last measured on 2026-09-23 (`26ae68b`) and were not repeated. The code they depend on (`src/style.css`, `src/main.ts`) has not changed since.
 - Contrast over the bitmap backdrop is measured against its base colour, not per pixel.
-- **Overlapping vehicles in normal row 4.** Starts `[0, 4, 8]` with length 2 make the vehicle at 8 wrap into column 0 in every tick, overlapping the vehicle at 0. One windshield is hidden and the pair looks like a three-cell body with a notch ([`active-desktop.png`](evidence/active-desktop.png), [`e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png)). Collisions and the lane rules are unaffected. A fix must keep the preset winnable. The first attempt (`[0, 3, 6]`) made it unwinnable and was reverted (see Part 2).
-- **The hard preset cannot be won.** An exhaustive search over every reachable state (tick mod 54, player position, lives) found no winning path for `hard`. The player never survives the first lane, because four of five lanes have one-cell gaps and move every tick, so collision check B always hits. The same search found shortest wins of 6 moves for `easy` and 11 for `normal`. This has been true since the baseline. The search was a temporary probe and is not part of the committed test suite. `tests/reachability.test.ts` covers only `easy`.
+- The recorded golden paths and shortest safe wins (6 / 11 / 15) are tied to the current rules and presets. Any preset change must re-measure them; see `specs/003-review-fixes/contracts/preset-invariants.md`.
+- The hard preset is proven winnable by search, not play-tested for how hard it feels.
 
 ---
 
@@ -189,6 +190,38 @@ Re-running every check against the current code found two more defects:
 - **Overlapping vehicles — attempted fix reverted (`7c172e7`, reverted in `26ae68b`):** in the normal preset, row 4 (length 2, starts `[0, 4, 8]`) had the vehicle at 8 wrap into column 0 in all 200 checked ticks, hiding one windshield. A test requiring that no two vehicles of a lane share a cell failed for normal row 4, and the starts were changed to `[0, 3, 6]`. The check covered only the non-blocking invariant, not passability. Three vehicles of length 2 leave one-cell gaps, and an exhaustive search later showed that no winning path existed for `normal`. The student noticed the denser lane in play. The change and its test were reverted, which restores the winnable `[0, 4, 8]` and the overlap limitation.
 - **Startup console error and landmarks (`d42607f`):** every page load logged `404 /favicon.ico`, which contradicted D1. `index.html` now declares an empty icon. The `#app` root was a `<main>` that received a second `<main>`; it is now a `<div>`.
 
+## Corrections after the third review (2026-09-26)
+
+The plan, measured alternatives, and exact tasks are in `specs/003-review-fixes/`. Each correction is one commit on branch `003-review-fixes`.
+
+### Normal row 4 overlap (`7ae37c5`)
+
+- **Claim:** Normal row 4 can be made overlap-free without making the normal preset harder to win.
+- **Signal:** In every tick 0–199, the vehicle starting at 8 wrapped into column 0 and shared that cell with the vehicle starting at 0 (E4 FAIL for this row).
+- **Hypothesis:** Removing only the overlapping vehicle (starts `[0, 4, 8]` → `[0, 4]`) removes the overlap and keeps a two-cell or wider gap, so collision check B does not block the lane.
+- **Smallest change:** One line in `src/config/presets.ts`. Direction, speed, and length unchanged.
+- **Check:** New tests first: no-overlap for all presets, reachability and recorded paths for easy and normal. Before the change: `Tests  2 failed | 50 passed (52)` (normal overlap and the new normal winning path). After: 52/52.
+- **Result:** Supported. No overlap in any lane; the shortest safe normal win is still 11 actions.
+- **Limitation:** Row 4 now has two vehicles instead of three visible bodies; its occupied cells per tick drop from five to four.
+
+### Hard preset unwinnable (`6e5edbb`)
+
+- **Claim:** Hard can be made winnable while staying the hardest preset.
+- **Signal:** An exhaustive search found no winning path; rows 1, 2, 4, 5 move every tick with one-cell gaps, so collision check B always hits.
+- **Hypothesis:** Removing one vehicle from each of those four rows creates gaps that a player can use; row 3 (every two ticks) can stay.
+- **Smallest change:** Four lines in `src/config/presets.ts`: `[0, 6]`, `[1, 7]`, `[5, 8]`, `[1, 7]`. A search over all one-vehicle removals showed that every winnable variant needs all four removals; this variant has the longest shortest win.
+- **Check:** Reachability and recorded-path tests extended to hard, plus an order test (easy < normal < hard). Before the change: `Tests  3 failed | 54 passed (57)`. After: 57/57.
+- **Result:** Supported. Shortest safe wins are 6 / 11 / 15 actions.
+- **Limitation:** Difficulty is measured by the shortest path length, not by play-testing.
+
+### Automated browser smoke test (`2c1b3b1`)
+
+- **Claim:** Startup, focus, configuration fallback, and win/loss lock with restart can be verified automatically in a real browser.
+- **Signal:** These checks were scripted by hand for each review and were not repeatable by the reviewer.
+- **Change:** Playwright dev dependency; `npm run test:e2e` with 10 scenarios that replay the same golden paths as the unit tests; `npm run evidence:screenshots` regenerates the images in this document.
+- **Result:** 10/10 pass on `2c1b3b1`.
+- **Limitation:** Chromium only, local only.
+
 ## Git preservation
 
 | Point | Commit |
@@ -199,7 +232,10 @@ Re-running every check against the current code found two more defects:
 | E4 controlled change | `c154822` |
 | Voxel Night City redesign | `ddcb519` |
 | Revert of the preset change | `26ae68b` |
-| Code verified in Part 1 | `26ae68b` |
+| Code verified on 2026-09-23 | `26ae68b` |
+| Normal row 4 fix | `7ae37c5` |
+| Hard preset fix | `6e5edbb` |
+| Browser smoke test; code verified in Part 1 | `2c1b3b1` |
 
 ## Partner contributions
 
@@ -218,6 +254,10 @@ Re-running every check against the current code found two more defects:
 ### After the reviews (23 September 2026)
 
 - **Aleksa** — decided on and approved each post-review correction listed above, carried out with an AI coding assistant, as recorded in `AI_USAGE_LOG.md`.
+
+### After the third review (2026-09-26)
+
+- **Aleksa** — reviewed the third review, chose the fixes (normal row 4 `[0, 4]`, a winnable hard preset, Playwright), reviewed the Spec Kit plan in `specs/003-review-fixes/` before implementation, and confirmed the regenerated screenshots. The implementation followed that plan with OpenAI Codex (GPT-6), as recorded in `AI_USAGE_LOG.md`.
 
 ### Demonstration
 

@@ -14,6 +14,9 @@ A deterministic, turn-based crossing game built with TypeScript and Canvas for S
 - `npm run build` — type-check and create a production build
 - `npm run test:run` — run the test suite once
 - `npm run typecheck` — run TypeScript checks without emitting files
+- `npx playwright install chromium` — one-time download of the browser used by the browser tests
+- `npm run test:e2e` — build the game and run the browser smoke test (startup, focus, invalid configuration, win/loss input lock, restart)
+- `npm run evidence:screenshots` — regenerate the evidence screenshots in `docs/evidence/`
 
 ## Play
 
@@ -27,7 +30,7 @@ Optional URL query fields are `lives`, `crossingsToWin`, and `difficulty`. See `
 
 ## Project status
 
-The Session 003 core game, runtime configuration validation, deterministic rule tests, and evidence workflow are implemented on `main`. The Voxel Night City redesign (`specs/002-voxel-night-city/`) is an accepted visual addendum that does not change gameplay rules. Evidence is in `docs/EVIDENCE_003.md` and `docs/evidence/`.
+The Session 003 core game, runtime configuration validation, deterministic rule tests, and evidence workflow are implemented on `main`. The Voxel Night City redesign (`specs/002-voxel-night-city/`) is an accepted visual addendum that does not change gameplay rules. Evidence is in `docs/EVIDENCE_003.md` and `docs/evidence/`. Corrections from the third review (non-overlapping and winnable presets, browser smoke test) are specified in `specs/003-review-fixes/`.
 
 ## Scope
 

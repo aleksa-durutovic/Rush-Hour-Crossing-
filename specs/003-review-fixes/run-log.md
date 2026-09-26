@@ -116,6 +116,7 @@ Playwright test lines:
 - `npm run evidence:screenshots` summary: `9 passed (10.4s)`
 - Files changed: `active-desktop.png`, `active-narrow-320.png`, `d5-invalid-config.png`, `d6-loss.png`, `d6-win.png`, `e4-wrap-normal-tick4.png`, `keyboard-focus.png` modified; `d6-win-hard.png` and `d6-win-normal.png` new. `baseline-active-normal.png` not listed.
 - Student visual confirmation (T031): 1 yes; 2 yes; 3 yes; 4 yes. Student confirmed row 4 shows two separate two-cell vehicles with one windshield each; E4 shows TICK 4 and the wrapped blue vehicle split across both edges with one windshield total; the hard win screenshot says `CITY CROSSED!` and `HARD TRAFFIC`; Aleksa and Igor agreed to DEC-1–DEC-4 and the constitution amendment 1.0.0 → 1.1.0.
+- C4_SHA: 1aea49f
 
 ## Notes
 
@@ -139,3 +140,69 @@ warning: unable to access 'C:\Users\AleksA/.config/git/ignore': Permission denie
 ```
 
 The status content matched §0. The two permission warnings were a sandbox limitation and do not change the T001 result; T001 is treated as passed per the student's instruction.
+
+- C5_SHA: d8c8466
+
+### T044 — stopped at placeholder grep
+
+Expected: `git grep -n "{{" -- docs README.md AGENTS.md security.md .specify/memory/constitution.md` returns no output.
+
+Actual output:
+
+```text
+Binary file docs/evidence/active-desktop.png matches
+Binary file docs/evidence/active-narrow-320.png matches
+Binary file docs/evidence/baseline-active-normal.png matches
+Binary file docs/evidence/d5-invalid-config.png matches
+Binary file docs/evidence/d6-loss.png matches
+Binary file docs/evidence/d6-win-hard.png matches
+Binary file docs/evidence/d6-win-normal.png matches
+Binary file docs/evidence/d6-win.png matches
+Binary file docs/evidence/e4-wrap-normal-tick4.png matches
+Binary file docs/evidence/keyboard-focus.png matches
+```
+
+Stopped at T044 because the placeholder check output was not empty.
+
+### T044 — approved text-only placeholder check
+
+The guide's original command omitted `-I`; `git grep` searched PNG binary data and reported these 10 binary matches:
+
+```text
+Binary file docs/evidence/active-desktop.png matches
+Binary file docs/evidence/active-narrow-320.png matches
+Binary file docs/evidence/baseline-active-normal.png matches
+Binary file docs/evidence/d5-invalid-config.png matches
+Binary file docs/evidence/d6-loss.png matches
+Binary file docs/evidence/d6-win-hard.png matches
+Binary file docs/evidence/d6-win-normal.png matches
+Binary file docs/evidence/d6-win.png matches
+Binary file docs/evidence/e4-wrap-normal-tick4.png matches
+Binary file docs/evidence/keyboard-focus.png matches
+```
+
+Reason: binary false positives from literal `{{` byte pairs in PNG data; §US4-M's command omitted `-I`. The student explicitly approved using the text-only command below for T044 check 1.
+
+Corrected command: `git grep -n -I "{{" -- docs README.md AGENTS.md security.md .specify/memory/constitution.md`
+
+Actual output: no output (exit 1, no text-file matches).
+
+Check 2: Part 1 contains no `unwinnable` or `cannot be won` claim; its only `overlap` reference says D4 includes the no-overlap invariant. GAME_SPEC D6 describes reachable win and loss in all three presets and has no Known limitations text. All four `**Current result:**` paragraphs in EVALS say PASS.
+
+Check 3: `git diff --stat 26ae68b HEAD -- src` returned `src/config/presets.ts | 10 +++++-----` and `1 file changed, 5 insertions(+), 5 deletions(-)`.
+
+Check 4 — final checks (all exit 0): `npm ci` → `added 42 packages, and audited 43 packages in 5s`; `found 0 vulnerabilities`; `npm audit --audit-level=high` → `found 0 vulnerabilities`; `npm run typecheck` → `tsc --noEmit`; `npm run test:run` → `Test Files  7 passed (7)`, `Tests  57 passed (57)`; `npm run build` → `✓ 14 modules transformed.`, `✓ built in 504ms`; `npm run test:e2e` → `Running 10 tests using 1 worker`, `10 passed (5.3s)`.
+
+Check 5 actual status:
+
+```text
+ M AGENTS.md
+ M README.md
+ M docs/CONTEXT_MANIFEST.md
+ M docs/EVALS.md
+ M docs/EVIDENCE_003.md
+ M security.md
+ M specs/003-review-fixes/run-log.md
+ M specs/003-review-fixes/spec.md
+?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md
+```

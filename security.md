@@ -7,10 +7,10 @@ This document records the security-relevant decisions for Rush Hour Crossing. Th
 | Field | Value |
 |---|---|
 | Name | Rush Hour Crossing |
-| Stack | Vite 8.3.0, TypeScript 7.0.2, Vitest 5.0.1, Canvas 2D |
+| Stack | Vite 8.3.0, TypeScript 7.0.2, Vitest 5.0.1, Canvas 2D; Playwright 1.63.0 (development only) |
 | Deployment | Out of scope for Session 003 |
 | Created | 2026-09-22 |
-| Last updated | 2026-09-23 |
+| Last updated | 2026-09-26 |
 
 ## Applied measures
 
@@ -33,11 +33,18 @@ Command: `npm audit --audit-level=high`
 
 | Kind | Date | Dependency graph | Result |
 |---|---|---|---|
-| Current check | 2026-09-23 | `main`, code at `26ae68b`, after a clean `npm ci` | Exit 0; 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
+| Current check | 2026-09-26 | Branch `003-review-fixes`, code at `2c1b3b1`, after a clean `npm ci` | Exit 0; 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 86 dependencies |
+| Historical | 2026-09-23 | `main`, code at `26ae68b`, after a clean `npm ci` | Exit 0; 0 vulnerabilities (info 0, low 0, moderate 0, high 0, critical 0) across 83 dependencies |
 | Historical | 2026-09-23 | Voxel Night City redesign validation | No result: the npm advisory endpoint failed; no clean audit claimed |
 | Historical | 2026-09-22 | Functional baseline and controlled change | Exit 0; zero vulnerabilities reported |
 
 Historical rows describe the dependency graph at their recorded date. Only the current check describes the graph on `main` today.
+
+### Development dependency: Playwright
+
+- `@playwright/test` is a dev dependency used only by `npm run test:e2e` and `npm run evidence:screenshots`. It is not imported by `src/` and is not part of the production build in `dist/`.
+- The tests open only `http://localhost:4173`, served by `vite preview` from the local build. They make no request to any other host.
+- `npx playwright install chromium` downloads a browser binary from the Playwright download servers into the user's cache, outside the repository. It is a one-time development step.
 
 ## Not applicable in Session 003
 
@@ -45,6 +52,7 @@ SQL injection protection, server security headers, rate limiting, authentication
 
 ## Known limitations
 
+- The browser used by the smoke test is downloaded by Playwright at development time; its integrity relies on Playwright's own download checks.
 - Hosting-specific security headers cannot be selected or verified until deployment is explicitly brought into scope.
 - Dependency audit results describe the installed dependency graph at the recorded time and must be rerun after dependency changes.
 

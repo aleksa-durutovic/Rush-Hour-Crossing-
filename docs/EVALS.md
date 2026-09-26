@@ -1,6 +1,6 @@
 # Mini Eval Set — Session 003
 
-Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementation. Results must be appended without rewriting these expectations. **Current result** is the only result that describes the project now (2026-09-23, code at `26ae68b`). Baseline and post-change results are the historical record.
+Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementation. Results must be appended without rewriting these expectations. **Current result** is the only result that describes the project now (2026-09-26, code at `2c1b3b1`). All earlier results, including the one dated 2026-09-23, are the historical record.
 
 ## E1 — Typical deterministic play
 
@@ -12,7 +12,9 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Post-change result:** PASS. The unchanged 100-run determinism test passed against the normal preset and the final tick remained 6.
 
-**Current result:** PASS. The unchanged 100-run determinism test in `tests/turn.test.ts` passes. The final state is tick 6, player `(5, 6)`, 1 life, 0 crossings, status `active`. The sequence only enters rows 5 and 6. The normal preset is the same as in the baseline.
+**Result on 2026-09-23 (code at `26ae68b`):** PASS. The unchanged 100-run determinism test in `tests/turn.test.ts` passes. The final state is tick 6, player `(5, 6)`, 1 life, 0 crossings, status `active`. The sequence only enters rows 5 and 6. The normal preset is the same as in the baseline.
+
+**Current result:** PASS. The unchanged 100-run determinism test in `tests/turn.test.ts` passes on `2c1b3b1`. The final state is still tick 6, player `(5, 6)`, 1 life, 0 crossings, status `active`: the sequence only enters rows 5 and 6, and neither row changed in the normal preset.
 
 ## E2 — Grid boundary consumes a turn
 
@@ -24,7 +26,9 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Post-change result:** PASS. The unchanged boundary test passed with position `(4, 6)`, tick 1, three lives, and active status.
 
-**Current result:** PASS. The boundary test passes. In the browser, S at the start row advanced tick 0 → 1 with 3 lives and status `active`.
+**Result on 2026-09-23 (code at `26ae68b`):** PASS. The boundary test passes. In the browser, S at the start row advanced tick 0 → 1 with 3 lives and status `active`.
+
+**Current result:** PASS. The unchanged boundary test in `tests/turn.test.ts` passes on `2c1b3b1`: position `(4, 6)`, tick 1, 3 lives, status `active`.
 
 ## E3 — Invalid configuration uses complete fallback
 
@@ -36,7 +40,9 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Post-change result:** PASS. The unchanged config suite passed and browser repetition displayed the same three invalid field names with complete fallback.
 
-**Current result:** PASS. The config suite passes (valid example, all five required invalid examples, combined invalid query). The browser shows `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.` with the default state ([`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png)).
+**Result on 2026-09-23 (code at `26ae68b`):** PASS. The config suite passes (valid example, all five required invalid examples, combined invalid query). The browser shows `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.` with the default state ([`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png)).
+
+**Current result:** PASS. The config suite passes on `2c1b3b1`. The browser smoke test *an invalid configuration names every invalid field and uses defaults* (`npm run test:e2e`) finds the alert `Invalid configuration: lives, crossingsToWin, difficulty. All defaults are active.` and the default state ([`evidence/d5-invalid-config.png`](evidence/d5-invalid-config.png), regenerated from `2c1b3b1`).
 
 ## E4 — Baseline regression
 
@@ -52,4 +58,6 @@ Expectations in E1–E3 were recorded on 2026-09-22 before gameplay implementati
 
 **Correction to the post-change result:** that inspection missed normal-preset row 4. Starts `[0, 4, 8]` with length 2 made the vehicle at 8 wrap into column 0 and overlap the vehicle at 0 in every tick, which hid one windshield. A fix (`7c172e7`, starts `[0, 3, 6]`) removed the overlap but left one-cell gaps that made the normal preset unwinnable, so it was reverted in `26ae68b`. The overlap is still open.
 
-**Current result:** PASS for every lane except normal-preset row 4, which FAILs. The renderer draws each configured vehicle as one contiguous body with one directional windshield ([`evidence/active-desktop.png`](evidence/active-desktop.png)). At tick 4 the row-2 vehicle crossing the board edge is drawn as two edge segments with one windshield in total ([`evidence/e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png)). In normal row 4, two configured vehicles occupy the same cell in every tick, so the pair looks like one three-cell body with a notch and one windshield is hidden. The cause is the preset data, not the renderer. It stays open until a change is found that removes the overlap and keeps the preset winnable. For comparison, the baseline failure is re-captured from the tag in [`evidence/baseline-active-normal.png`](evidence/baseline-active-normal.png).
+**Result on 2026-09-23 (code at `26ae68b`):** PASS for every lane except normal-preset row 4, which FAILs. The renderer draws each configured vehicle as one contiguous body with one directional windshield ([`evidence/active-desktop.png`](evidence/active-desktop.png)). At tick 4 the row-2 vehicle crossing the board edge is drawn as two edge segments with one windshield in total ([`evidence/e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png)). In normal row 4, two configured vehicles occupy the same cell in every tick, so the pair looks like one three-cell body with a notch and one windshield is hidden. The cause is the preset data, not the renderer. It stays open until a change is found that removes the overlap and keeps the preset winnable. For comparison, the baseline failure is re-captured from the tag in [`evidence/baseline-active-normal.png`](evidence/baseline-active-normal.png).
+
+**Current result:** PASS for every lane of every preset. Normal row 4 now starts at `[0, 4]` (`7ae37c5`), so its two vehicles never share a cell; `tests/presets.test.ts` → *never places two vehicles of one lane on the same cell through tick 199* passes for all presets. In [`evidence/active-desktop.png`](evidence/active-desktop.png) row 4 shows two separate two-cell vehicles, each with one windshield. At tick 4 the row-2 vehicle crossing the board edge is still drawn as two edge segments with one windshield in total ([`evidence/e4-wrap-normal-tick4.png`](evidence/e4-wrap-normal-tick4.png)). The normal preset is still won in 11 actions at best (`tests/reachability.test.ts`). The renderer was not changed. Both images were regenerated from `2c1b3b1`.

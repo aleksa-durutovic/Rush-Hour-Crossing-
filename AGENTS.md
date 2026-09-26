@@ -8,7 +8,8 @@ Read this file before changing the project. It points to the authoritative sourc
 2. `docs/GAME_SPEC.md` — gameplay rules R1–R7, configuration contract, out-of-scope list, and Definition of Done D1–D8.
 3. `specs/001-rush-hour-crossing/` — accepted core game specification, plan, and tasks.
 4. `specs/002-voxel-night-city/` — accepted visual addendum. It changes presentation only, never gameplay rules.
-5. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
+5. `specs/003-review-fixes/` — accepted corrections after the third review: preset invariants (no overlap, winnable), golden paths, and the browser smoke test. It changes preset data and tests only.
+6. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
 
 When sources conflict, the higher item wins. Report the conflict; do not resolve it silently.
 
@@ -19,6 +20,7 @@ When sources conflict, the higher item wins. Report the conflict; do not resolve
 - `src/input/` — keyboard-to-action mapping only.
 - `src/render/` — Canvas drawing. Text shown to the player comes from pure helpers such as `end-message.ts`, so it can be tested.
 - `src/main.ts` — wiring only.
+- `tests/` — Vitest unit tests; `tests/fixtures/golden-paths.ts` holds the recorded paths. `e2e/` — Playwright browser tests (`*.pw.ts`). Keep the two separate.
 
 ## Required workflow
 
@@ -38,6 +40,8 @@ npm run typecheck
 npm run test:run
 npm run build
 npm audit --audit-level=high
+npx playwright install chromium   # once per machine
+npm run test:e2e
 ```
 
 Record actual results only. Never claim a check that did not run or did not return a result.

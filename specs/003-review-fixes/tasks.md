@@ -22,9 +22,9 @@
 
 **Allowed files**: `specs/003-review-fixes/run-log.md`
 
-- [ ] T001 Verify the starting point: `git branch --show-current` prints `003-review-fixes`; `git log --oneline -1` shows the commit `docs(spec): add 003 review-fixes specification`; `git status --short` shows only `?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md`. See §0.
-- [ ] T002 Create `specs/003-review-fixes/run-log.md` from the template in §1 and fill the "Environment" block with real `node -v`, `npm -v`, `git rev-parse --short HEAD` output.
-- [ ] T003 Run `npm ci`, `npm run typecheck`, `npm run test:run`, `npm run build` and record exit codes and key lines under "Before any change" in `specs/003-review-fixes/run-log.md`. Expected: all exit 0; `Tests  43 passed (43)`. See §1.
+- [x] T001 Verify the starting point: `git branch --show-current` prints `003-review-fixes`; `git log --oneline -1` shows the commit `docs(spec): add 003 review-fixes specification`; `git status --short` shows only `?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md`. See §0.
+- [x] T002 Create `specs/003-review-fixes/run-log.md` from the template in §1 and fill the "Environment" block with real `node -v`, `npm -v`, `git rev-parse --short HEAD` output.
+- [x] T003 Run `npm ci`, `npm run typecheck`, `npm run test:run`, `npm run build` and record exit codes and key lines under "Before any change" in `specs/003-review-fixes/run-log.md`. Expected: all exit 0; `Tests  43 passed (43)`. See §1.
 
 ---
 
@@ -44,15 +44,15 @@ No foundational task. The shared golden-path fixture is created inside User Stor
 
 ### Tests for User Story 1 (write first, observe failure)
 
-- [ ] T004 [US1] Replace the whole content of `tests/presets.test.ts` with §US1-A (adds the test `%s never places two vehicles of one lane on the same cell through tick 199`).
-- [ ] T005 [US1] Create `tests/fixtures/golden-paths.ts` with §US1-B and replace the whole content of `tests/reachability.test.ts` with §US1-C.
-- [ ] T006 [US1] Run `npm run typecheck` (expected exit 0) and `npm run test:run`. Expected: `Tests  2 failed | 50 passed (52)`, and the two failing names are exactly `normal never places two vehicles of one lane on the same cell through tick 199` and `the recorded winning path wins normal`. Copy the summary and the two failing names into `run-log.md` under "US1 — failing before change". See §US1-D.
+- [x] T004 [US1] Replace the whole content of `tests/presets.test.ts` with §US1-A (adds the test `%s never places two vehicles of one lane on the same cell through tick 199`).
+- [x] T005 [US1] Create `tests/fixtures/golden-paths.ts` with §US1-B and replace the whole content of `tests/reachability.test.ts` with §US1-C.
+- [x] T006 [US1] Run `npm run typecheck` (expected exit 0) and `npm run test:run`. Expected: `Tests  2 failed | 50 passed (52)`, and the two failing names are exactly `normal never places two vehicles of one lane on the same cell through tick 199` and `the recorded winning path wins normal`. Copy the summary and the two failing names into `run-log.md` under "US1 — failing before change". See §US1-D.
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] In `src/config/presets.ts`, change only the normal row-4 line from `lane(4, 'left', 2, 2, [0, 4, 8]),` to `lane(4, 'left', 2, 2, [0, 4]),`. See §US1-E.
-- [ ] T008 [US1] Run `npm run typecheck`, `npm run test:run`, `npm run build`. Expected: exit 0; `Test Files  7 passed (7)`; `Tests  52 passed (52)`. Record under "US1 — after change" in `run-log.md`. See §US1-F.
-- [ ] T009 [US1] Check `git diff --stat` lists only the allowed files, then commit exactly as in §US1-G (message `fix(presets): remove the overlapping vehicle in normal row 4`).
+- [x] T007 [US1] In `src/config/presets.ts`, change only the normal row-4 line from `lane(4, 'left', 2, 2, [0, 4, 8]),` to `lane(4, 'left', 2, 2, [0, 4]),`. See §US1-E.
+- [x] T008 [US1] Run `npm run typecheck`, `npm run test:run`, `npm run build`. Expected: exit 0; `Test Files  7 passed (7)`; `Tests  52 passed (52)`. Record under "US1 — after change" in `run-log.md`. See §US1-F.
+- [x] T009 [US1] Check `git diff --stat` lists only the allowed files, then commit exactly as in §US1-G (message `fix(presets): remove the overlapping vehicle in normal row 4`).
 
 **Checkpoint**: Normal row 4 fixed and committed (C1). The game is releasable at this point.
 
@@ -68,16 +68,16 @@ No foundational task. The shared golden-path fixture is created inside User Stor
 
 ### Tests for User Story 2 (write first, observe failure)
 
-- [ ] T010 [US2] Replace the whole content of `tests/fixtures/golden-paths.ts` with §US2-A (widens the type to `Difficulty` and adds `hard`).
-- [ ] T011 [US2] Replace the whole content of `tests/reachability.test.ts` with §US2-B (covers all three presets and adds `orders presets by the fewest actions needed for a safe win`).
-- [ ] T012 [US2] Run `npm run typecheck`. Expected: exit 0.
-- [ ] T013 [US2] Run `npm run test:run`. Expected: `Tests  3 failed | 54 passed (57)`, failing names exactly `hard can be won without losing a life`, `the recorded winning path wins hard`, `the recorded losing path loses hard`. Record under "US2 — failing before change". See §US2-C.
+- [x] T010 [US2] Replace the whole content of `tests/fixtures/golden-paths.ts` with §US2-A (widens the type to `Difficulty` and adds `hard`).
+- [x] T011 [US2] Replace the whole content of `tests/reachability.test.ts` with §US2-B (covers all three presets and adds `orders presets by the fewest actions needed for a safe win`).
+- [x] T012 [US2] Run `npm run typecheck`. Expected: exit 0.
+- [x] T013 [US2] Run `npm run test:run`. Expected: `Tests  3 failed | 54 passed (57)`, failing names exactly `hard can be won without losing a life`, `the recorded winning path wins hard`, `the recorded losing path loses hard`. Record under "US2 — failing before change". See §US2-C.
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] In `src/config/presets.ts`, change only the four hard lines for rows 1, 2, 4, 5 exactly as in §US2-D. Row 3 and the easy and normal presets stay unchanged.
-- [ ] T015 [US2] Run `npm run typecheck`, `npm run test:run`, `npm run build`. Expected: exit 0; `Tests  57 passed (57)`. Record under "US2 — after change". See §US2-E.
-- [ ] T016 [US2] Check `git diff --stat`, then commit exactly as in §US2-F (message `fix(presets): make the hard preset winnable`).
+- [x] T014 [US2] In `src/config/presets.ts`, change only the four hard lines for rows 1, 2, 4, 5 exactly as in §US2-D. Row 3 and the easy and normal presets stay unchanged.
+- [x] T015 [US2] Run `npm run typecheck`, `npm run test:run`, `npm run build`. Expected: exit 0; `Tests  57 passed (57)`. Record under "US2 — after change". See §US2-E.
+- [x] T016 [US2] Check `git diff --stat`, then commit exactly as in §US2-F (message `fix(presets): make the hard preset winnable`).
 
 **Checkpoint**: All three presets winnable, none overlapping (C2).
 
@@ -91,18 +91,18 @@ No foundational task. The shared golden-path fixture is created inside User Stor
 
 **Allowed files**: `package.json`, `package-lock.json`, `tsconfig.json`, `.gitignore`, `playwright.config.ts`, `e2e/support.ts`, `e2e/smoke.pw.ts`, `e2e/evidence.pw.ts`, `specs/003-review-fixes/run-log.md`
 
-- [ ] T017 [US3] Run `npm install --save-dev @playwright/test@^1.63.0`. Expected: exit 0, `found 0 vulnerabilities`, `package.json` devDependencies now contains `"@playwright/test": "^1.63.0"`. Record the output. See §US3-A.
-- [ ] T018 [US3] Run `npx playwright install chromium` once. Expected: exit 0. If it fails (no network, proxy, disk), stop and report; do not switch to another browser or `channel`. See §US3-B.
-- [ ] T019 [US3] Add the two npm scripts with the exact commands in §US3-C (`test:e2e`, `evidence:screenshots`) to `package.json`.
-- [ ] T020 [US3] In `tsconfig.json`, change `"include": ["src", "tests"]` to `"include": ["src", "tests", "e2e", "playwright.config.ts"]`. See §US3-D.
-- [ ] T021 [US3] Append the four Playwright output folders from §US3-E to `.gitignore`.
-- [ ] T022 [US3] Create `playwright.config.ts` with the exact content of §US3-F.
-- [ ] T023 [US3] Create `e2e/support.ts` with the exact content of §US3-G.
-- [ ] T024 [US3] Create `e2e/smoke.pw.ts` with the exact content of §US3-H.
-- [ ] T025 [US3] Create `e2e/evidence.pw.ts` with the exact content of §US3-I. Do **not** run it in this phase.
-- [ ] T026 [US3] Run `npm run typecheck` (exit 0), `npm run test:run` (`Test Files  7 passed (7)`, `Tests  57 passed (57)` — proves Vitest ignores `e2e/`), `npm run build` (exit 0). Record. See §US3-J.
-- [ ] T027 [US3] Run `npm run test:e2e`. Expected: `10 passed`. Record the full list of 10 test lines. If any test fails, stop and report the failing title and error text; do not edit `src/`. See §US3-J.
-- [ ] T028 [US3] Run `git status --short`: `docs/evidence/` must show no change and `test-results/` must not appear. Commit exactly as in §US3-K (message `test(e2e): add a Playwright browser smoke test`). Write the short SHA of this commit into `run-log.md` as **CODE_SHA**. This is commit C3.
+- [x] T017 [US3] Run `npm install --save-dev @playwright/test@^1.63.0`. Expected: exit 0, `found 0 vulnerabilities`, `package.json` devDependencies now contains `"@playwright/test": "^1.63.0"`. Record the output. See §US3-A.
+- [x] T018 [US3] Run `npx playwright install chromium` once. Expected: exit 0. If it fails (no network, proxy, disk), stop and report; do not switch to another browser or `channel`. See §US3-B.
+- [x] T019 [US3] Add the two npm scripts with the exact commands in §US3-C (`test:e2e`, `evidence:screenshots`) to `package.json`.
+- [x] T020 [US3] In `tsconfig.json`, change `"include": ["src", "tests"]` to `"include": ["src", "tests", "e2e", "playwright.config.ts"]`. See §US3-D.
+- [x] T021 [US3] Append the four Playwright output folders from §US3-E to `.gitignore`.
+- [x] T022 [US3] Create `playwright.config.ts` with the exact content of §US3-F.
+- [x] T023 [US3] Create `e2e/support.ts` with the exact content of §US3-G.
+- [x] T024 [US3] Create `e2e/smoke.pw.ts` with the exact content of §US3-H.
+- [x] T025 [US3] Create `e2e/evidence.pw.ts` with the exact content of §US3-I. Do **not** run it in this phase.
+- [x] T026 [US3] Run `npm run typecheck` (exit 0), `npm run test:run` (`Test Files  7 passed (7)`, `Tests  57 passed (57)` — proves Vitest ignores `e2e/`), `npm run build` (exit 0). Record. See §US3-J.
+- [x] T027 [US3] Run `npm run test:e2e`. Expected: `10 passed`. Record the full list of 10 test lines. If any test fails, stop and report the failing title and error text; do not edit `src/`. See §US3-J.
+- [x] T028 [US3] Run `git status --short`: `docs/evidence/` must show no change and `test-results/` must not appear. Commit exactly as in §US3-K (message `test(e2e): add a Playwright browser smoke test`). Write the short SHA of this commit into `run-log.md` as **CODE_SHA**. This is commit C3.
 
 **Checkpoint**: All code is final. From here on, only documentation and images change.
 
@@ -118,28 +118,28 @@ No foundational task. The shared golden-path fixture is created inside User Stor
 
 ### Current-state measurement on CODE_SHA
 
-- [ ] T029 [US4] With HEAD at CODE_SHA and no uncommitted change, run the full sequence in §US4-A (`npm ci`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm audit --audit-level=high`, `npm audit --json` metadata, `npm run test:e2e`, `npx playwright --version`) and record every result under "Current state (CODE_SHA)" in `run-log.md`.
-- [ ] T030 [US4] Run `npm run evidence:screenshots`. Expected: `9 passed`; `git status --short docs/evidence` lists 7 modified and 2 new PNG files and never `baseline-active-normal.png`. See §US4-B.
-- [ ] T031 [US4] **Stop and ask the student** to open `docs/evidence/active-desktop.png`, `docs/evidence/e4-wrap-normal-tick4.png`, and `docs/evidence/d6-win-hard.png` and confirm the three visual facts listed in §US4-C. Continue only after a clear "yes". Record the answer in `run-log.md`.
-- [ ] T032 [US4] Commit the images exactly as in §US4-D (message `docs(evidence): regenerate screenshots from CODE_SHA`, with the real SHA). This is C4.
+- [x] T029 [US4] With HEAD at CODE_SHA and no uncommitted change, run the full sequence in §US4-A (`npm ci`, `npm run typecheck`, `npm run test:run`, `npm run build`, `npm audit --audit-level=high`, `npm audit --json` metadata, `npm run test:e2e`, `npx playwright --version`) and record every result under "Current state (CODE_SHA)" in `run-log.md`.
+- [x] T030 [US4] Run `npm run evidence:screenshots`. Expected: `9 passed`; `git status --short docs/evidence` lists 7 modified and 2 new PNG files and never `baseline-active-normal.png`. See §US4-B.
+- [x] T031 [US4] **Stop and ask the student** to open `docs/evidence/active-desktop.png`, `docs/evidence/e4-wrap-normal-tick4.png`, and `docs/evidence/d6-win-hard.png` and confirm the three visual facts listed in §US4-C. Continue only after a clear "yes". Record the answer in `run-log.md`.
+- [x] T032 [US4] Commit the images exactly as in §US4-D (message `docs(evidence): regenerate screenshots from CODE_SHA`, with the real SHA). This is C4.
 
 ### Rules and governance (C5)
 
-- [ ] T033 [US4] Amend `.specify/memory/constitution.md` to version 1.1.0 exactly as in §US4-E.
-- [ ] T034 [US4] Edit `docs/GAME_SPEC.md` R3, the invariants line, D4, and D6 exactly as in §US4-F. No other line changes.
-- [ ] T035 [US4] Append the section in §US4-G to the end of `docs/AI_USAGE_LOG.md`, replacing every `{{…}}` from `run-log.md`.
-- [ ] T036 [US4] Commit exactly as in §US4-H (message `docs: record the review fixes in the spec and constitution`). This is C5.
+- [x] T033 [US4] Amend `.specify/memory/constitution.md` to version 1.1.0 exactly as in §US4-E.
+- [x] T034 [US4] Edit `docs/GAME_SPEC.md` R3, the invariants line, D4, and D6 exactly as in §US4-F. No other line changes.
+- [x] T035 [US4] Append the section in §US4-G to the end of `docs/AI_USAGE_LOG.md`, replacing every `{{…}}` from `run-log.md`.
+- [x] T036 [US4] Commit exactly as in §US4-H (message `docs: record the review fixes in the spec and constitution`). This is C5.
 
 ### Evidence and supporting documents (C6)
 
-- [ ] T037 [US4] Edit `docs/EVALS.md` exactly as in §US4-I: update the header sentence; in each of E1–E4 rename the existing `**Current result:**` label to `**Result on 2026-09-23 (code at `26ae68b`):**` without changing its text, and add a new `**Current result:**` paragraph directly below it. Do not change any existing expectation or the text of any historical result.
-- [ ] T038 [US4] Replace Part 1 of `docs/EVIDENCE_003.md` (from the line `# Part 1 — Current state` up to, not including, the `---` line before `# Part 2`) and the top intro paragraph with §US4-J, filling every `{{…}}` from `run-log.md`.
-- [ ] T039 [US4] In Part 2 of `docs/EVIDENCE_003.md`, insert the section from §US4-K before `## Git preservation`, add the rows from §US4-K to the Git preservation table, and add the contribution block from §US4-K.
-- [ ] T040 [US4] Edit `security.md` exactly as in §US4-L1.
-- [ ] T041 [US4] Edit `README.md` exactly as in §US4-L2.
-- [ ] T042 [US4] Edit `AGENTS.md` and the status line of `specs/003-review-fixes/spec.md` exactly as in §US4-L3.
-- [ ] T043 [US4] Edit `docs/CONTEXT_MANIFEST.md` exactly as in §US4-L4.
-- [ ] T044 [US4] Run every check in §US4-M (placeholder grep, stale-claim grep, full command sequence). All must match. Tick completed boxes in `specs/003-review-fixes/tasks.md`. Commit exactly as in §US4-N (message `docs: regenerate current evidence and evals from CODE_SHA`). This is C6.
+- [x] T037 [US4] Edit `docs/EVALS.md` exactly as in §US4-I: update the header sentence; in each of E1–E4 rename the existing `**Current result:**` label to `**Result on 2026-09-23 (code at `26ae68b`):**` without changing its text, and add a new `**Current result:**` paragraph directly below it. Do not change any existing expectation or the text of any historical result.
+- [x] T038 [US4] Replace Part 1 of `docs/EVIDENCE_003.md` (from the line `# Part 1 — Current state` up to, not including, the `---` line before `# Part 2`) and the top intro paragraph with §US4-J, filling every `{{…}}` from `run-log.md`.
+- [x] T039 [US4] In Part 2 of `docs/EVIDENCE_003.md`, insert the section from §US4-K before `## Git preservation`, add the rows from §US4-K to the Git preservation table, and add the contribution block from §US4-K.
+- [x] T040 [US4] Edit `security.md` exactly as in §US4-L1.
+- [x] T041 [US4] Edit `README.md` exactly as in §US4-L2.
+- [x] T042 [US4] Edit `AGENTS.md` and the status line of `specs/003-review-fixes/spec.md` exactly as in §US4-L3.
+- [x] T043 [US4] Edit `docs/CONTEXT_MANIFEST.md` exactly as in §US4-L4.
+- [x] T044 [US4] Run every check in §US4-M (placeholder grep, stale-claim grep, full command sequence). All must match. Tick completed boxes in `specs/003-review-fixes/tasks.md`. Commit exactly as in §US4-N (message `docs: regenerate current evidence and evals from CODE_SHA`). This is C6.
 
 ---
 
