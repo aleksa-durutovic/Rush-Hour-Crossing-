@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DIFFICULTY_PRESETS } from '../src/config/presets'
 import type {
+  Difficulty,
   GameConfig,
   GameState,
   GameStatus,
@@ -9,11 +10,10 @@ import type {
 } from '../src/game/state'
 import { createInitialState } from '../src/game/state'
 import { applyAction } from '../src/game/turn'
-import type { CoveredDifficulty } from './fixtures/golden-paths'
 import { LOSING_PATHS, SHORTEST_SAFE_WIN, WINNING_PATHS } from './fixtures/golden-paths'
 
 const actions: readonly PlayerAction[] = ['up', 'down', 'left', 'right', 'wait']
-const difficulties: readonly CoveredDifficulty[] = ['easy', 'normal']
+const difficulties: readonly Difficulty[] = ['easy', 'normal', 'hard']
 const MAX_PATH_LENGTH = 80
 
 describe('real preset reachability', () => {
@@ -26,6 +26,11 @@ describe('real preset reachability', () => {
 
   it.each(difficulties)('%s can be lost through player actions', (difficulty) => {
     expect(findPath(difficulty, 3, 'lost')).not.toBeNull()
+  })
+
+  it('orders presets by the fewest actions needed for a safe win', () => {
+    expect(SHORTEST_SAFE_WIN.easy).toBeLessThan(SHORTEST_SAFE_WIN.normal)
+    expect(SHORTEST_SAFE_WIN.normal).toBeLessThan(SHORTEST_SAFE_WIN.hard)
   })
 })
 
@@ -52,7 +57,7 @@ describe('recorded golden paths', () => {
   })
 })
 
-function replay(difficulty: CoveredDifficulty, path: readonly PlayerAction[]): GameState {
+function replay(difficulty: Difficulty, path: readonly PlayerAction[]): GameState {
   const config: GameConfig = { lives: 3, crossingsToWin: 1, difficulty }
   const lanes = DIFFICULTY_PRESETS[difficulty]
   return path.reduce(
@@ -62,7 +67,7 @@ function replay(difficulty: CoveredDifficulty, path: readonly PlayerAction[]): G
 }
 
 function findPath(
-  difficulty: CoveredDifficulty,
+  difficulty: Difficulty,
   lives: number,
   target: Extract<GameStatus, 'won' | 'lost'>,
 ): PlayerAction[] | null {

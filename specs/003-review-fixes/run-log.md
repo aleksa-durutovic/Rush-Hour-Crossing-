@@ -37,17 +37,26 @@ typecheck exit: 0
 | `npm run test:run` | 0 | `Test Files  7 passed (7)`; `Tests  52 passed (52)` |
 | `npm run build` | 0 | `vite v8.3.0 building client environment for production...`; `✓ built in 128ms` |
 
-- C1_SHA:
+- C1_SHA: 7ae37c5
 
 ## US2 — failing before change
 
 ```text
+typecheck exit: 0
+ FAIL  tests/reachability.test.ts > real preset reachability > hard can be won without losing a life
+ FAIL  tests/reachability.test.ts > recorded golden paths > the recorded winning path wins hard
+ FAIL  tests/reachability.test.ts > recorded golden paths > the recorded losing path loses hard
+ Test Files  1 failed | 6 passed (7)
+      Tests  3 failed | 54 passed (57)
 ```
 
 ## US2 — after change
 
 | Command | Exit | Key output |
 |---|---:|---|
+| `npm run typecheck` | 0 | `> tsc --noEmit` |
+| `npm run test:run` | 0 | `Test Files  7 passed (7)`; `Tests  57 passed (57)` |
+| `npm run build` | 0 | `vite v8.3.0 building client environment for production...`; `✓ built in 127ms` |
 
 - C2_SHA:
 
