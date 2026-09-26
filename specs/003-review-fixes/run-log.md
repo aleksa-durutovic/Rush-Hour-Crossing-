@@ -88,22 +88,34 @@ Playwright test lines:
   ok 10 e2e\smoke.pw.ts:108:5 › browser smoke › hard: a loss locks input until R restarts (168ms)
 ```
 
-- CODE_SHA (commit C3):
+- CODE_SHA (commit C3): 2c1b3b1
 
 ## Current state (CODE_SHA)
 
 | Command | Exit | Key output |
 |---|---:|---|
+| `git rev-parse --short HEAD` | 0 | `2c1b3b1` |
+| `npm ci` | 0 | `added 42 packages, and audited 43 packages in 2s`; `found 0 vulnerabilities` |
+| `npm run typecheck` | 0 | `> tsc --noEmit` |
+| `npm run test:run` | 0 | `Test Files  7 passed (7)`; `Tests  57 passed (57)` |
+| `npm run build` | 0 | `vite v8.3.0 building client environment for production...`; `✓ 14 modules transformed.`; `✓ built in 446ms` |
+| `npm audit --audit-level=high` | 0 | `found 0 vulnerabilities` |
+| `npm audit --json` | 0 | Metadata: vulnerabilities info 0, low 0, moderate 0, high 0, critical 0, total 0; dependencies prod 1, dev 86, optional 47, peer 0, peerOptional 0, total 86 |
+| `npm run test:e2e` | 0 | `Running 10 tests using 1 worker`; `10 passed (4.6s)` |
+| `npx playwright --version` | 0 | `Version 1.63.0` |
+| `npm ls vite typescript vitest @playwright/test --depth=0` | 0 | `@playwright/test@1.63.0`; `typescript@7.0.2`; `vite@8.3.0`; `vitest@5.0.1` |
+| `git diff --stat 26ae68b HEAD -- src` | 0 | `src/config/presets.ts | 10 +++++-----`; `1 file changed, 5 insertions(+), 5 deletions(-)` |
+| `git diff 26ae68b HEAD -- src/style.css src/render src/main.ts index.html` | 0 | (no output) |
 
-- Versions (`npm ls vite typescript vitest @playwright/test --depth=0`):
-- `npx playwright --version`:
-- `npm audit --json` metadata:
+- Versions (`npm ls vite typescript vitest @playwright/test --depth=0`): `@playwright/test@1.63.0`, `typescript@7.0.2`, `vite@8.3.0`, `vitest@5.0.1`
+- `npx playwright --version`: `Version 1.63.0`
+- `npm audit --json` metadata: vulnerabilities total 0; dependencies total 86
 
 ## Evidence screenshots
 
-- `npm run evidence:screenshots` summary:
-- Files changed:
-- Student visual confirmation (T031):
+- `npm run evidence:screenshots` summary: `9 passed (10.4s)`
+- Files changed: `active-desktop.png`, `active-narrow-320.png`, `d5-invalid-config.png`, `d6-loss.png`, `d6-win.png`, `e4-wrap-normal-tick4.png`, `keyboard-focus.png` modified; `d6-win-hard.png` and `d6-win-normal.png` new. `baseline-active-normal.png` not listed.
+- Student visual confirmation (T031): 1 yes; 2 yes; 3 yes; 4 yes. Student confirmed row 4 shows two separate two-cell vehicles with one windshield each; E4 shows TICK 4 and the wrapped blue vehicle split across both edges with one windshield total; the hard win screenshot says `CITY CROSSED!` and `HARD TRAFFIC`; Aleksa and Igor agreed to DEC-1–DEC-4 and the constitution amendment 1.0.0 → 1.1.0.
 
 ## Notes
 
