@@ -56,13 +56,13 @@ Jedan potez (u tick-u `t`):
 |---|---|
 | **R1** | Igrač se pomera za tačno jedno polje po potezu. Pokušaj pomeranja van grida ne menja poziciju i tretira se kao `wait` (potez se troši). |
 | **R2** | Svaki potez, uključujući `wait` i pokušaj izlaska van grida, pomera saobraćaj za tačno jedan tick. |
-| **R3** | Saobraćaj je potpuno deterministički (bez RNG-a). Svaka traka ima smer, brzinu (pomera se jednom na `N` tickova, najviše 1 polje po pomeranju) i vozila jedne dužine. Vozilo koje izađe sa jedne ivice ulazi sa suprotne (wrap-around). Nijedna traka ni u jednom tick-u nije potpuno blokirana. |
+| **R3** | Saobraćaj je potpuno deterministički (bez RNG-a). Svaka traka ima smer, brzinu (pomera se jednom na `N` tickova, najviše 1 polje po pomeranju) i vozila jedne dužine. Vozilo koje izađe sa jedne ivice ulazi sa suprotne (wrap-around). Nijedna traka ni u jednom tick-u nije potpuno blokirana. Dva vozila iste trake nikada ne dele isto polje. |
 | **R4** | Sudar znači da igrač i vozilo dele isto polje. Proverava se dvaput u potezu (A i B iz game loop-a). Sudar u bilo kojoj proveri oduzima najviše jedan život po potezu i vraća igrača na `(4, 6)`. Tick svejedno napreduje. |
 | **R5** | Redovi `y = 0` i `y = 6` nemaju vozila. Dolazak u `y = 0` bez sudara daje +1 prelazak i +100 poena, a igrač se vraća na start. |
 | **R6** | `difficulty` bira preset saobraćaja (gustina i brzina traka) iz posebnog constants fajla; brojevi ne žive u logici. Konfiguracija se validira (vidi ispod). |
 | **R7** | Posle kraja igre input se ignoriše osim `R`, koji resetuje stanje (tick 0, životi iz konfiguracije, 0 prelazaka, 0 poena). |
 
-**Invarijante:** isti config + isti niz akcija daje identičan ishod; `lives` nikad ne pada ispod 0; broj prelazaka nikad ne opada.
+**Invarijante:** isti config + isti niz akcija daje identičan ishod; `lives` nikad ne pada ispod 0; broj prelazaka nikad ne opada; u svakom difficulty presetu pobeda je dostižna bez gubitka života, a poraz je dostižan.
 
 ## Strukturisan deo: konfiguracija igre
 
@@ -127,12 +127,12 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
   - Dokaz: `tests/turn.test.ts` (R1, R2, R4, R5, R7), `tests/traffic.test.ts` (R3), `tests/presets.test.ts` i `tests/config.test.ts` (R6), `tests/end-message.test.ts` (poruka za R7 odgovara statusu).
 - [x] **D3** Determinizam: isti config i isti niz akcija daje identično stanje (test).
   - Dokaz: `tests/turn.test.ts` → *is deterministic for the same config and action sequence*; eval E1 u `EVALS.md` → *Current result*.
-- [x] **D4** Za sva tri difficulty preseta nijedna traka nije potpuno blokirana ni u jednom tick-u 0..199 (test).
-  - Dokaz: `tests/presets.test.ts` → *never-blocked traffic lanes through tick 199* za `easy`, `normal` i `hard`.
+- [x] **D4** Za sva tri difficulty preseta nijedna traka nije potpuno blokirana i nijedna dva vozila iste trake ne dele polje ni u jednom tick-u 0..199 (test).
+  - Dokaz: `tests/presets.test.ts` → *never-blocked traffic lanes through tick 199* i *never places two vehicles of one lane on the same cell through tick 199* za `easy`, `normal` i `hard`.
 - [x] **D5** Validacija konfiguracije prihvata validne primere i odbija svih 5 nevalidnih primera iznad uz listu grešaka; pri nevalidnom ulazu igra koristi default i prikazuje poruku (test + screenshot).
   - Dokaz: `tests/config.test.ts` (validan primer, svih 5 nevalidnih primera, kombinovani nevalidan upit); screenshot `docs/evidence/d5-invalid-config.png`, opisan u `EVIDENCE_003.md` → *Part 1 — Current state* → *Browser checks*.
-- [x] **D6** Pobeda i poraz su dostižni odigravanjem (screenshot ili zapis).
-  - Dokaz: screenshotovi `docs/evidence/d6-win.png` (šest `W` → `won`, „CITY CROSSED!“) i `docs/evidence/d6-loss.png` (`W, W, D, W, W, W` → `lost`, „GAME OVER“), sa `crossingsToWin=1&difficulty=easy`; testovi `tests/turn.test.ts`, `tests/reachability.test.ts` i `tests/end-message.test.ts` (tekst poruke odgovara statusu); zapis u `EVIDENCE_003.md` → *Part 1 — Current state* → *Browser checks*. Ograničenje: pobeda je dostižna u `easy` (6 poteza) i `normal` (11 poteza), ali ne i u `hard` preset-u (`EVIDENCE_003.md` → *Known limitations*).
+- [x] **D6** Pobeda i poraz su dostižni odigravanjem u sva tri difficulty preseta (test, automatizovani browser test i screenshot).
+  - Dokaz: `tests/reachability.test.ts` (pretraga nalazi pobedu bez gubitka života — najkraće 6 / 11 / 15 poteza za `easy` / `normal` / `hard` — i poraz; snimljene putanje iz `tests/fixtures/golden-paths.ts` pobeđuju i gube), `e2e/smoke.pw.ts` (iste putanje u pravom browseru, zaključan input posle kraja i restart sa `R`; `npm run test:e2e`), `tests/end-message.test.ts` (tekst poruke odgovara statusu); screenshotovi `docs/evidence/d6-win.png`, `docs/evidence/d6-win-normal.png`, `docs/evidence/d6-win-hard.png` i `docs/evidence/d6-loss.png`; zapis u `EVIDENCE_003.md` → *Part 1 — Current state* → *Browser checks*.
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
   - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`; svi imaju *Current result*.
 - [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.

@@ -1,11 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: template -> 1.0.0
-- Added principles: Locked Gameplay Scope; Pure Turn Logic; Deterministic Simulation;
-  Runtime-Validated Boundaries; Configuration Outside Logic; Tests and Expectations
-  Before Change; Smallest Controlled Change; Traceable and Safe Work
-- Added sections: Technical Constraints; Development Workflow and Quality Gates
-- Removed sections: none; template placeholders were resolved
+- Version change: 1.0.0 -> 1.1.0
+- Modified principles: V. Configuration Outside Logic (adds the no-overlap and
+  winnable-preset invariants after the third review)
+- Added sections: none
+- Removed sections: none
+- Templates requiring updates: none
 - Follow-up TODOs: none
 -->
 # Rush Hour Crossing Constitution
@@ -37,8 +37,10 @@ the game.
 ### V. Configuration Outside Logic
 Grid dimensions, starting values, difficulty presets, lane directions, speeds, vehicle
 lengths, and placements MUST live in typed constants or configuration modules rather than
-inside transition logic. Every preset MUST satisfy the non-blocking-lane invariant over
-ticks 0 through 199.
+inside transition logic. Over ticks 0 through 199, every preset MUST satisfy the
+non-blocking-lane invariant and the no-overlap invariant (no two vehicles of one lane share
+a cell). Every preset MUST also allow a win from a fresh game without losing a life, and
+an automated search MUST prove it.
 
 ### VI. Tests and Expectations Before Change
 Automated tests MUST cover rules R1 through R7, configuration validation, determinism,
@@ -85,4 +87,4 @@ and a semantic version change: MAJOR for incompatible governance changes, MINOR 
 or materially expanded principles, and PATCH for clarifications. Every review MUST verify
 constitution compliance and justify any added complexity against the locked scope.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-22
+**Version**: 1.1.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-26
