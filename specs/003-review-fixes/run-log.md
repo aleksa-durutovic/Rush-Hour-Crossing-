@@ -58,12 +58,35 @@ typecheck exit: 0
 | `npm run test:run` | 0 | `Test Files  7 passed (7)`; `Tests  57 passed (57)` |
 | `npm run build` | 0 | `vite v8.3.0 building client environment for production...`; `✓ built in 127ms` |
 
-- C2_SHA:
+- C2_SHA: 6e5edbb
 
 ## US3
 
 | Command | Exit | Key output |
 |---|---:|---|
+| `npm install --save-dev @playwright/test@^1.63.0` | 0 | `added 3 packages, and audited 43 packages in 2s`; `found 0 vulnerabilities`; package version `"^1.63.0"` |
+| `npx playwright install chromium` | 0 | (no output) |
+| `npm pkg set "scripts.test:e2e=playwright test e2e/smoke.pw.ts"` | 0 | (no output) |
+| `npm pkg set "scripts.evidence:screenshots=playwright test e2e/evidence.pw.ts"` | 0 | (no output) |
+| `npm run typecheck` | 0 | `> tsc --noEmit` |
+| `npm run test:run` | 0 | `Test Files  7 passed (7)`; `Tests  57 passed (57)` |
+| `npm run build` | 0 | `vite v8.3.0 building client environment for production...`; `✓ built in 129ms` |
+| `npm run test:e2e` | 0 | `Running 10 tests using 1 worker`; `10 passed (5.9s)` |
+
+Playwright test lines:
+
+```text
+  ok  1 e2e\smoke.pw.ts:9:3 › browser smoke › starts without console problems and focuses the board (607ms)
+  ok  2 e2e\smoke.pw.ts:34:3 › browser smoke › Tab moves visible keyboard focus to the board (220ms)
+  ok  3 e2e\smoke.pw.ts:46:3 › browser smoke › Space waits one turn (146ms)
+  ok  4 e2e\smoke.pw.ts:61:3 › browser smoke › an invalid configuration names every invalid field and uses defaults (153ms)
+  ok  5 e2e\smoke.pw.ts:79:5 › browser smoke › easy: a win locks input until R restarts (175ms)
+  ok  6 e2e\smoke.pw.ts:108:5 › browser smoke › easy: a loss locks input until R restarts (165ms)
+  ok  7 e2e\smoke.pw.ts:79:5 › browser smoke › normal: a win locks input until R restarts (182ms)
+  ok  8 e2e\smoke.pw.ts:108:5 › browser smoke › normal: a loss locks input until R restarts (173ms)
+  ok  9 e2e\smoke.pw.ts:79:5 › browser smoke › hard: a win locks input until R restarts (190ms)
+  ok 10 e2e\smoke.pw.ts:108:5 › browser smoke › hard: a loss locks input until R restarts (168ms)
+```
 
 - CODE_SHA (commit C3):
 

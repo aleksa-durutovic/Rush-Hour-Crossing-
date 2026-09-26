@@ -13,9 +13,12 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test e2e/smoke.pw.ts",
+    "evidence:screenshots": "playwright test e2e/evidence.pw.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.1"
