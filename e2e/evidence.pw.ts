@@ -89,6 +89,21 @@ test.describe('evidence screenshots', () => {
     })
   }
 
+  test('difficulty selector, hard chosen', async ({ page }) => {
+    await open(page, '/')
+    await page.locator('[data-difficulty="hard"]').click()
+    await expect(page.locator('[data-difficulty="hard"]')).toHaveAttribute('aria-pressed', 'true')
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 3,
+      score: 0,
+      tick: 0,
+      status: 'active',
+    })
+    await capture(page, 'difficulty-switch.png')
+  })
+
   test('loss (D6), easy', async ({ page }) => {
     const golden = LOSING_PATHS.easy
     await open(page, '/?crossingsToWin=1&difficulty=easy')
