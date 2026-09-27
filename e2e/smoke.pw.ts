@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import type { Difficulty } from '../src/game/state'
 import { LOSING_PATHS, WINNING_PATHS } from '../tests/fixtures/golden-paths'
 import { expectBoard, playActions } from './support'
@@ -134,4 +134,153 @@ test.describe('browser smoke', () => {
       })
     })
   }
+})
+
+async function expectPressed(page: Page, active: Difficulty): Promise<void> {
+  for (const difficulty of difficulties) {
+    await expect(page.locator(`[data-difficulty="${difficulty}"]`)).toHaveAttribute(
+      'aria-pressed',
+      String(difficulty === active),
+    )
+  }
+}
+
+function currentSearch(page: Page): string {
+  return new URL(page.url()).search
+}
+
+test.describe('difficulty selector', () => {
+  test('marks the active difficulty as pressed', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('#difficulty-switch button')).toHaveText(['EASY', 'NORMAL', 'HARD'])
+    await expectPressed(page, 'normal')
+
+    await page.goto('/?difficulty=hard')
+    await expectPressed(page, 'hard')
+  })
+
+  test('a click on another difficulty restarts on that preset and updates the URL', async ({ page }) => {
+    await page.goto('/?crossingsToWin=1')
+    await page.keyboard.press('Space')
+    await page.keyboard.press('Space')
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 1,
+      score: 0,
+      tick: 2,
+      status: 'active',
+    })
+
+    await page.locator('[data-difficulty="hard"]').click()
+
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 1,
+      score: 0,
+      tick: 0,
+      status: 'active',
+    })
+    await expectPressed(page, 'hard')
+    await expect(page.locator('#game-canvas')).toBeFocused()
+    expect(currentSearch(page)).toBe('?crossingsToWin=1&difficulty=hard')
+
+    const golden = WINNING_PATHS.hard
+    await playActions(page, golden.actions)
+    await expectBoard(page, {
+      lives: golden.finalLives,
+      crossings: 1,
+      crossingsToWin: 1,
+      score: 100,
+      tick: golden.finalTick,
+      status: 'won',
+    })
+  })
+
+  test('a click on the active difficulty keeps the current game', async ({ page }) => {
+    await page.goto('/')
+    await page.keyboard.press('Space')
+
+    await page.locator('[data-difficulty="normal"]').click()
+
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 3,
+      score: 0,
+      tick: 1,
+      status: 'active',
+    })
+    await expectPressed(page, 'normal')
+    await expect(page.locator('#game-canvas')).toBeFocused()
+    expect(currentSearch(page)).toBe('')
+  })
+
+  test('a reload keeps the chosen difficulty', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('[data-difficulty="easy"]').click()
+    await expectPressed(page, 'easy')
+
+    await page.reload()
+
+    await expectPressed(page, 'easy')
+    expect(currentSearch(page)).toBe('?difficulty=easy')
+    await playActions(page, WINNING_PATHS.easy.actions)
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 1,
+      crossingsToWin: 3,
+      score: 100,
+      tick: 6,
+      status: 'active',
+    })
+  })
+
+  test('choosing a difficulty after an invalid configuration clears the alert', async ({ page }) => {
+    await page.goto('/?lives=0&crossingsToWin=11&difficulty=insane')
+    await expect(page.locator('#config-alert')).toBeVisible()
+
+    await page.locator('[data-difficulty="hard"]').click()
+
+    await expect(page.locator('#config-alert')).toBeHidden()
+    await expectPressed(page, 'hard')
+    expect(currentSearch(page)).toBe('?difficulty=hard')
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 3,
+      score: 0,
+      tick: 0,
+      status: 'active',
+    })
+  })
+
+  test('Tab reaches the buttons and Space selects without playing a turn', async ({ page }) => {
+    await page.goto('/')
+    await page.keyboard.press('Space')
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 3,
+      score: 0,
+      tick: 1,
+      status: 'active',
+    })
+
+    await page.keyboard.press('Tab')
+    await expect(page.locator('[data-difficulty="easy"]')).toBeFocused()
+    await page.keyboard.press('Space')
+
+    await expectPressed(page, 'easy')
+    await expectBoard(page, {
+      lives: 3,
+      crossings: 0,
+      crossingsToWin: 3,
+      score: 0,
+      tick: 0,
+      status: 'active',
+    })
+    await expect(page.locator('#game-canvas')).toBeFocused()
+  })
 })

@@ -47,7 +47,7 @@ function drawHud(context: CanvasRenderingContext2D, state: GameState, config: Ga
   context.fillText(`★ SCORE ${state.score}`, 408, 25)
   context.font = '700 12px Consolas, monospace'
   context.fillStyle = '#57d3e5'
-  context.fillText(`TICK ${state.tick}  ·  ${config.difficulty.toUpperCase()} TRAFFIC`, 20, 54)
+  context.fillText(`TICK ${state.tick}`, 20, 54)
 }
 
 function drawBoard(

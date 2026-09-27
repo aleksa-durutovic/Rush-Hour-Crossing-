@@ -1,5 +1,6 @@
 import './style.css'
-import { resolveGameConfig } from './config/game-config'
+import { buildDifficultySearch } from './config/difficulty-query'
+import { DIFFICULTIES, resolveGameConfig } from './config/game-config'
 import { DIFFICULTY_PRESETS } from './config/presets'
 import { restartGame } from './game/state'
 import { applyAction } from './game/turn'
@@ -25,38 +26,59 @@ app.innerHTML = `
     <p id="config-alert" class="config-alert" role="status" hidden></p>
 
     <div class="board-frame">
-      <canvas
-        id="game-canvas"
-        tabindex="0"
-        aria-label="Rush Hour Crossing game board. Use arrow keys or W A S D to move, Space to wait, and R to restart."
-      ></canvas>
+      <div class="board-stage">
+        <canvas
+          id="game-canvas"
+          tabindex="0"
+          aria-label="Rush Hour Crossing game board. Use arrow keys or W A S D to move, Space to wait, and R to restart."
+        ></canvas>
+        <div id="difficulty-switch" class="difficulty-switch" role="group" aria-label="Traffic difficulty">
+          ${DIFFICULTIES.map(
+            (difficulty) =>
+              `<button type="button" class="difficulty-switch__button" data-difficulty="${difficulty}" aria-pressed="false">${difficulty.toUpperCase()}</button>`,
+          ).join('')}
+        </div>
+      </div>
     </div>
 
-    <footer class="controls" aria-label="Keyboard controls">
+    <footer class="controls" aria-label="Controls">
       <span><kbd>↑ ↓ ← →</kbd> or <kbd>W A S D</kbd> move</span>
       <span><kbd>Space</kbd> wait</span>
       <span><kbd>R</kbd> restart</span>
+      <span><kbd>Click</kbd> EASY / NORMAL / HARD traffic</span>
     </footer>
   </main>
 `
 
 const canvas = requireElement<HTMLCanvasElement>('#game-canvas')
 const configAlert = requireElement<HTMLParagraphElement>('#config-alert')
+const difficultyButtons = Array.from(
+  document.querySelectorAll<HTMLButtonElement>('#difficulty-switch button[data-difficulty]'),
+)
 const context = configureCanvas(canvas)
 const configResolution = resolveGameConfig(new URLSearchParams(window.location.search))
-const config = configResolution.config
-const lanes = DIFFICULTY_PRESETS[config.difficulty]
+let config = configResolution.config
+let lanes = DIFFICULTY_PRESETS[config.difficulty]
+let usedFallback = configResolution.usedFallback
 let state = restartGame(config)
 
-if (configResolution.usedFallback) {
+if (usedFallback) {
   configAlert.hidden = false
   configAlert.textContent = `Invalid configuration: ${configResolution.invalidFields.join(', ')}. All defaults are active.`
+}
+
+for (const button of difficultyButtons) {
+  button.addEventListener('click', () => selectDifficulty(button.dataset.difficulty))
 }
 
 render()
 canvas.focus()
 
 window.addEventListener('keydown', (event) => {
+  if (event.target instanceof Element && event.target.closest('#difficulty-switch')) {
+    return
+  }
+
   const command = mapKeyboardEvent(event)
   if (!command) {
     return
@@ -67,8 +89,28 @@ window.addEventListener('keydown', (event) => {
   render()
 })
 
+function selectDifficulty(value: string | undefined): void {
+  const difficulty = DIFFICULTIES.find((candidate) => candidate === value)
+
+  if (difficulty && difficulty !== config.difficulty) {
+    config = { ...config, difficulty }
+    lanes = DIFFICULTY_PRESETS[difficulty]
+    state = restartGame(config)
+    window.history.replaceState(null, '', buildDifficultySearch(window.location.search, difficulty, usedFallback))
+    usedFallback = false
+    configAlert.hidden = true
+    configAlert.textContent = ''
+    render()
+  }
+
+  canvas.focus()
+}
+
 function render(): void {
   renderGame(context, state, config, lanes)
+  for (const button of difficultyButtons) {
+    button.setAttribute('aria-pressed', String(button.dataset.difficulty === config.difficulty))
+  }
   const frame = canvas.closest<HTMLElement>('.board-frame')
   frame?.classList.remove('turn-flash')
   if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
