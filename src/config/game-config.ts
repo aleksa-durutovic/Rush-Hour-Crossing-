@@ -12,7 +12,7 @@ export interface ConfigResolution {
   usedFallback: boolean
 }
 
-const DIFFICULTIES: readonly Difficulty[] = ['easy', 'normal', 'hard']
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'normal', 'hard']
 
 export function resolveGameConfig(params: URLSearchParams): ConfigResolution {
   const invalidFields: (keyof GameConfig)[] = []
