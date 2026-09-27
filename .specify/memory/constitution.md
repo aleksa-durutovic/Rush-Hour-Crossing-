@@ -1,8 +1,8 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
-- Modified principles: V. Configuration Outside Logic (adds the no-overlap and
-  winnable-preset invariants after the third review)
+- Version change: 1.1.0 -> 1.1.1
+- Modified principles: none (Technical Constraints clarification: gameplay
+  moves stay keyboard-only; the difficulty selector may also be used with a mouse)
 - Added sections: none
 - Removed sections: none
 - Templates requiring updates: none
@@ -65,7 +65,8 @@ Session 003 evidence artifacts.
   deployment, live AI calls, and network services are prohibited in Session 003.
 - Dependencies MUST be kept to the minimum justified by the locked scope.
 - Accessibility MUST include readable contrast, visible keyboard focus, and no required
-  motion. Gameplay itself remains keyboard-only as specified.
+  motion. Gameplay moves remain keyboard-only as specified; the difficulty selector
+  may also be operated with a mouse.
 
 ## Development Workflow and Quality Gates
 
@@ -87,4 +88,4 @@ and a semantic version change: MAJOR for incompatible governance changes, MINOR 
 or materially expanded principles, and PATCH for clarifications. Every review MUST verify
 constitution compliance and justify any added complexity against the locked scope.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-26
+**Version**: 1.1.1 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-27

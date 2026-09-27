@@ -20,9 +20,10 @@ Rush Hour Crossing je turn-based igra u kojoj igrač prelazi preko pet traka sao
 | Strelice ili W/A/S/D | pomeranje za jedno polje (up / down / left / right) |
 | Space | `wait` (preskoči potez) |
 | R | restart igre |
+| Klik mišem na `EASY` / `NORMAL` / `HARD` (HUD, desno od `TICK`) | izbor težine; nova igra na izabranom presetu |
 
 - Jedan `keydown` = jedan potez. Događaji sa `event.repeat === true` se ignorišu.
-- Samo tastatura.
+- Potezi igre se igraju samo tastaturom. Težina se bira i mišem (vidi *Izbor težine*).
 
 ## Grid i pojmovi
 
@@ -48,7 +49,7 @@ Jedan potez (u tick-u `t`):
 
 - **Pobeda:** broj prelazaka ≥ `crossingsToWin`.
 - **Poraz:** `lives === 0`.
-- Posle pobede ili poraza svi inputi osim `R` se ignorišu.
+- Posle pobede ili poraza svi inputi osim `R` i izbora težine se ignorišu.
 
 ## Ključna pravila
 
@@ -60,7 +61,7 @@ Jedan potez (u tick-u `t`):
 | **R4** | Sudar znači da igrač i vozilo dele isto polje. Proverava se dvaput u potezu (A i B iz game loop-a). Sudar u bilo kojoj proveri oduzima najviše jedan život po potezu i vraća igrača na `(4, 6)`. Tick svejedno napreduje. |
 | **R5** | Redovi `y = 0` i `y = 6` nemaju vozila. Dolazak u `y = 0` bez sudara daje +1 prelazak i +100 poena, a igrač se vraća na start. |
 | **R6** | `difficulty` bira preset saobraćaja (gustina i brzina traka) iz posebnog constants fajla; brojevi ne žive u logici. Konfiguracija se validira (vidi ispod). |
-| **R7** | Posle kraja igre input se ignoriše osim `R`, koji resetuje stanje (tick 0, životi iz konfiguracije, 0 prelazaka, 0 poena). |
+| **R7** | Posle kraja igre input se ignoriše osim `R`, koji resetuje stanje (tick 0, životi iz konfiguracije, 0 prelazaka, 0 poena), i izbora težine, koji resetuje stanje isto kao `R`, ali na izabranom presetu. |
 
 **Invarijante:** isti config + isti niz akcija daje identičan ishod; `lives` nikad ne pada ispod 0; broj prelazaka nikad ne opada; u svakom difficulty presetu pobeda je dostižna bez gubitka života, a poraz je dostižan.
 
@@ -91,6 +92,15 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 **Validan primer:** `?lives=2&crossingsToWin=3&difficulty=hard`
 
 **Nevalidni primeri:** `?lives=0`, `?lives=2.5`, `?lives=abc`, `?crossingsToWin=11`, `?difficulty=insane`
+
+## Izbor težine (feature 004)
+
+- HUD ima tri dugmeta, `EASY`, `NORMAL` i `HARD`, desno od brojača `TICK`. Aktivna težina je istaknuta (`aria-pressed="true"`).
+- Klik (ili Enter/Space dok je dugme fokusirano) na neaktivnu težinu počinje novu igru kao `R` (tick 0, životi iz konfiguracije, 0 prelazaka, 0 poena), ali sa izabranim presetom; `lives` i `crossingsToWin` ostaju. Fokus se vraća na tablu.
+- Klik na već aktivnu težinu ne menja igru.
+- URL se menja bez ponovnog učitavanja (`history.replaceState`): postavlja se `difficulty`, ostali parametri ostaju. Ako je igra radila na fallback konfiguraciji, `lives` i `crossingsToWin` se uklanjaju iz URL-a i poruka o pogrešnoj konfiguraciji se sakriva, pa reload daje istu konfiguraciju koja se igra.
+- Pravila R1–R6, preseti i determinizam se ne menjaju.
+- Dokaz: `tests/difficulty-query.test.ts`, `e2e/smoke.pw.ts` → *difficulty selector*, screenshot `docs/evidence/difficulty-switch.png`.
 
 ## Minimalni vizuelni zahtev
 

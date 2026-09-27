@@ -9,7 +9,8 @@ Read this file before changing the project. It points to the authoritative sourc
 3. `specs/001-rush-hour-crossing/` — accepted core game specification, plan, and tasks.
 4. `specs/002-voxel-night-city/` — accepted visual addendum. It changes presentation only, never gameplay rules.
 5. `specs/003-review-fixes/` — accepted corrections after the third review: preset invariants (no overlap, winnable), golden paths, and the browser smoke test. It changes preset data and tests only.
-6. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
+6. `specs/004-difficulty-switch/` — accepted UI addendum: `EASY` / `NORMAL` / `HARD` buttons next to the tick counter. It adds a mouse-operated difficulty selector and changes no rule R1–R6.
+7. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
 
 When sources conflict, the higher item wins. Report the conflict; do not resolve it silently.
 

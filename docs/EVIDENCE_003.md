@@ -5,6 +5,8 @@ This document has two parts:
 1. **Current state.** The only evidence that describes the project as it is now. Every result was produced on 2026-09-26 from the code at commit `2c1b3b1`. Later commits change documentation and evidence files only.
 2. **Development history.** The process record the assignment requires: F0, baseline, controlled change, and later corrections. Numbers in that part were true on their own date and are superseded by part 1.
 
+Feature 004 (difficulty selector, code at `18abd71`) was added after the Part 1 verification. Its own checks are in Part 2 → *Difficulty selector*; the Part 1 screenshots intentionally still show the board without the buttons.
+
 ---
 
 # Part 1 — Current state (verified 2026-09-26, code at `2c1b3b1`)
@@ -222,6 +224,15 @@ The plan, measured alternatives, and exact tasks are in `specs/003-review-fixes/
 - **Result:** 10/10 pass on `2c1b3b1`.
 - **Limitation:** Chromium only, local only.
 
+## Difficulty selector (2026-09-27, `18abd71`)
+
+- **Claim:** The player can switch between easy, normal, and hard on the game screen with the mouse, without editing the URL.
+- **Signal:** Difficulty could only be chosen with `?difficulty=` in the URL.
+- **Change:** `EASY` / `NORMAL` / `HARD` buttons over the Canvas HUD next to `TICK` (`src/main.ts`, `src/style.css`); HUD line shows only `TICK n` (`src/render/canvas.ts`); pure helper `buildDifficultySearch` (`src/config/difficulty-query.ts`). A switch restarts the game on the chosen preset and updates the URL with `history.replaceState`. Plan: `specs/004-difficulty-switch/implementation-plan.md`.
+- **Tests first:** the new unit file failed before the helper existed; the 6 new browser tests failed (6 failed, 10 passed) before the buttons existed.
+- **Result:** typecheck, 8 files / 69 tests, build, audit (0 vulnerabilities), and `npm run test:e2e` 16 passed on `18abd71`. Screenshot [`difficulty-switch.png`](evidence/difficulty-switch.png). Student visual check: i did the check and everything works fine, you can continue.
+- **Limitation:** The button position is set in CSS percentages that match the current HUD geometry (576 × 520 Canvas, HUD line at y = 54). A change of `CELL_SIZE`, `HUD_HEIGHT`, or the HUD text must re-check the position. While a button has keyboard focus, game keys are ignored until focus returns to the board.
+
 ## Git preservation
 
 | Point | Commit |
@@ -236,6 +247,7 @@ The plan, measured alternatives, and exact tasks are in `specs/003-review-fixes/
 | Normal row 4 fix | `7ae37c5` |
 | Hard preset fix | `6e5edbb` |
 | Browser smoke test; code verified in Part 1 | `2c1b3b1` |
+| Difficulty selector (feature 004) | `18abd71` |
 
 ## Partner contributions
 

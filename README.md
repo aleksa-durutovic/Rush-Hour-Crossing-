@@ -15,7 +15,7 @@ A deterministic, turn-based crossing game built with TypeScript and Canvas for S
 - `npm run test:run` — run the test suite once
 - `npm run typecheck` — run TypeScript checks without emitting files
 - `npx playwright install chromium` — one-time download of the browser used by the browser tests
-- `npm run test:e2e` — build the game and run the browser smoke test (startup, focus, invalid configuration, win/loss input lock, restart)
+- `npm run test:e2e` — build the game and run the browser smoke test (startup, focus, invalid configuration, win/loss input lock, restart, difficulty selector)
 - `npm run evidence:screenshots` — regenerate the evidence screenshots in `docs/evidence/`
 
 ## Play
@@ -25,6 +25,7 @@ After starting the development server, focus the game board and use:
 - Arrow keys or W/A/S/D to move one cell
 - Space to wait for one turn
 - R to restart
+- Click `EASY`, `NORMAL`, or `HARD` next to the tick counter (or Tab to a button and press Enter or Space) to start a new game on that traffic preset; the choice is saved in the URL
 
 Optional URL query fields are `lives`, `crossingsToWin`, and `difficulty`. See `docs/GAME_SPEC.md` for their runtime validation contract.
 
