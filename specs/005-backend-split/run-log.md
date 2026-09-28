@@ -33,3 +33,11 @@ Real command results, appended by the coding agent after every task. Nothing her
 | T009 | `npm run test:run` | 0 | `Test Files  11 passed (11)`; `Tests  112 passed (112)` |
 | T009 | `npm run typecheck` | 0 | exit 0, no diagnostics (browser and server projects) |
 | T009 | `npm run build` | 0 | `✓ built in 118ms` |
+| T010 | `npm run test:e2e` | 1 | `2 failed`; `16 passed (8.1s)`; both failures are the new same-origin API tests (health content type received `text/html`; unknown API status received 200) |
+| T011 | `npm run typecheck` | 0 | exit 0, no diagnostics (browser and server projects) |
+| T011 | `npm run test:run` | 0 | `Test Files  11 passed (11)`; `Tests  112 passed (112)` |
+| T011 | `npm run build` | 0 | `✓ built in 126ms` |
+| T011 | `npm audit --audit-level=high` | 0 | `found 0 vulnerabilities` |
+| T011 | `npm run test:e2e` | 0 | `18 passed (7.3s)` |
+| T011 | `git status --short` | 0 | changed files: e2e/smoke.pw.ts, package.json, playwright.config.ts, scripts/, server/index.ts, vite.config.ts; no `docs/evidence/` files |
+| T012 | manual check | – | tests all passed, you can continue |
