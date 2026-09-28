@@ -21,3 +21,11 @@ Real command results, appended by the coding agent after every task. Nothing her
 | T002 | `npm run build` | 0 | `✓ built in 433ms` |
 | T002 | `npm audit --audit-level=high` | 0 | `found 0 vulnerabilities` |
 | T002 | `npm run test:e2e` | 0 | `16 passed (5.9s)` |
+| T004 | `npm install --save-dev tsx@4.23.15 @types/node@24.19.0` | 0 | `added 5 packages`; `found 0 vulnerabilities` |
+| T004 | `npm ls tsx @types/node` | 0 | top level `@types/node@24.19.0`; `tsx@4.23.15` |
+| T004 | `Test-Path node_modules/tsx/dist/cli.mjs` | 0 | `True` |
+| T006 | `npm run test:run` | 1 | `Test Files  1 failed | 8 passed (9)`; `Tests  69 passed (69)`; failure: cannot find `../../server/config` |
+| T007 | `npm run test:run` | 0 | `Test Files  9 passed (9)`; `Tests  83 passed (83)` |
+| T007 | `npm run typecheck` | 0 | exit 0, no diagnostics (browser and server projects) |
+| T007 | `npm run build` | 0 | `✓ built in 144ms` |
+| T007 | `npm audit --audit-level=high` | 0 | `found 0 vulnerabilities` |
