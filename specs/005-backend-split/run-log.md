@@ -41,3 +41,5 @@ Real command results, appended by the coding agent after every task. Nothing her
 | T011 | `npm run test:e2e` | 0 | `18 passed (7.3s)` |
 | T011 | `git status --short` | 0 | changed files: e2e/smoke.pw.ts, package.json, playwright.config.ts, scripts/, server/index.ts, vite.config.ts; no `docs/evidence/` files |
 | T012 | manual check | – | tests all passed, you can continue |
+| T013 | `npm ci` | 0 | `added 47 packages`; `found 0 vulnerabilities` |
+| T013 | `npm audit --audit-level=high` | 0 | `found 0 vulnerabilities` |
