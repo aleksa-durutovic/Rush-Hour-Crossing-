@@ -122,6 +122,7 @@ Commits, in order, on branch `005-backend-split`:
 |---|---|
 | C0 | `docs(spec): add 005 backend split plan` |
 | C1 | `docs: allow a local API server (constitution 1.2.0)` |
+| C1a | `docs(spec): repair 005 run log encoding` (added 2026-09-28, see §C1a) |
 | C2 | `feat(server): add validated server config and toolchain` |
 | C3 | `feat(server): add health route, host allowlist and static files` |
 | C4 | `feat(server): serve the game and the API from one origin` |
@@ -156,6 +157,7 @@ Test counts (predictions):
 7. Exactly **one** `npm install` command is allowed in the whole feature: the one in T004. No other package changes.
 8. No secrets, no `.env` file, no API key, no private URL anywhere — not in code, not in docs, not in the run log.
 9. After each task, append one row per command to `specs/005-backend-split/run-log.md` with the command and the real result (exit code and the summary lines, copied). This file is how the next session knows what happened.
+10. Create and edit files **only with your own file-edit tool** (apply_patch). Never write or append to a file with PowerShell `Set-Content`, `Add-Content`, `Out-File`, `>` or `>>`, or with bash `echo >`/`cat >`: Windows PowerShell 5.1 saves in the Windows-1252 code page, not UTF-8 (this broke the run log in C0, see §C1a). Every file must be UTF-8 without BOM. If a file write fails, stop **before** any further `git add` or `git commit`.
 
 ### Task list
 
@@ -164,6 +166,7 @@ Test counts (predictions):
 | T001 | §C0 | Check start state, create branch, create run log, commit plan (C0) |
 | T002 | §C0 | Run the baseline checks |
 | T003 | §C1 | Amend constitution, GAME_SPEC, AI log; commit C1 |
+| T003a | §C1a | Repair the run log (UTF-8, table, missing T002/T003 rows); commit C1a |
 | T004 | §C2 | Install the two dev dependencies |
 | T005 | §C2 | Update `tsconfig.json`, add `tsconfig.server.json`, update two scripts |
 | T006 | §C2 | Add the config test; see it fail |
@@ -409,6 +412,98 @@ git show --stat --oneline HEAD
 ```
 
 Expected: exactly those 4 files changed.
+
+---
+
+## §C1a Run log repair (T003a) — added 2026-09-28
+
+### What happened (diagnosed by Claude on 2026-09-28, read-only)
+
+- In T001 the run log was written with Windows PowerShell 5.1, which saved it in Windows-1252, not UTF-8 (the `—` in the title became byte `0x97`). Appending the T002 results then failed with a UTF-8 decoding error.
+- The first T001 row was glued to the table header (`|---|---|---|---|| T001 …`), so the table does not render.
+- The T002 and T003 rows were never written, and C1 (`77898c2`) was committed after the failed write instead of stopping first.
+- The C1 content itself (constitution, `GAME_SPEC.md`, `AI_USAGE_LOG.md`) was checked and is correct valid UTF-8. It is **not** changed here. History is not rewritten (no amend, no reset); the repair is a new commit.
+
+### T003a
+
+Start state:
+
+```bash
+git branch --show-current
+git log --oneline -3
+git status --short
+```
+
+Expected:
+
+```text
+005-backend-split
+77898c2 docs: allow a local API server (constitution 1.2.0)
+ff31da1 docs(spec): add 005 backend split plan
+8926ec1 docs: record the difficulty selector
+ M specs/005-backend-split/implementation-plan.md
+?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md
+```
+
+(The plan is modified because Claude added this section and rule 10; it is committed in C1a.)
+
+**Step 1 — replace the run log.** Using your file-edit tool (rule 10), delete `specs/005-backend-split/run-log.md` and add it again with exactly this content. If your tool cannot delete or read the broken file, delete it with `Remove-Item specs/005-backend-split/run-log.md` (PowerShell) or `rm specs/005-backend-split/run-log.md` (Git Bash) — deleting is allowed, writing with the shell is not — and then create it with your file-edit tool.
+
+```md
+# Run log — 005 backend split
+
+Real command results, appended by the coding agent after every task. Nothing here is predicted or edited by hand.
+
+| Task | Command | Exit | Real result (copied summary lines) |
+|---|---|---|---|
+| T001 | `git branch --show-current` | 0 | `main` |
+| T001 | `git status --short` | 0 | `?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md`; `?? specs/005-backend-split/` |
+| T001 | `git log --oneline -1` | 0 | `8926ec1 docs: record the difficulty selector` |
+| T001 | `git switch -c 005-backend-split` | 0 | `Switched to a new branch '005-backend-split'` |
+| T001 | `git commit -m "docs(spec): add 005 backend split plan" ...` | 0 | `[005-backend-split ff31da1] docs(spec): add 005 backend split plan` |
+| T001 | `git branch --show-current` | 0 | `005-backend-split` |
+| T002 | first run | – | Reported by the agent as passing (typecheck, 69 unit tests, build, audit, 16 browser tests), but the rows could not be written: the file was not UTF-8. Re-run in T003a below. |
+| T003 | note | – | Appending the T002 rows failed with a UTF-8 decoding error; C1 was committed before stopping. The C1 content was checked and is correct. Repaired in T003a (commit C1a). |
+```
+
+(The six T001 rows are copied unchanged from the broken file; only the encoding and the line break after the header were fixed.)
+
+**Step 2 — prove the file is UTF-8 without BOM:**
+
+```bash
+node -e "const b=require('fs').readFileSync('specs/005-backend-split/run-log.md'); new TextDecoder('utf-8',{fatal:true}).decode(b); console.log(b[0]===0xEF?'BOM':'utf8 ok, no BOM')"
+```
+
+Expected output exactly: `utf8 ok, no BOM`. Anything else (an error or `BOM`) → stop.
+
+**Step 3 — record C1 and re-run the baseline:**
+
+```bash
+git show --stat --oneline 77898c2
+node -v
+npm -v
+npm ci
+npm run typecheck
+npm run test:run
+npm run build
+npm audit --audit-level=high
+npm run test:e2e
+```
+
+Expected: every command exits 0; `git show` lists exactly the 4 C1 files; `npm run test:run` ends with `Test Files  8 passed (8)` / `Tests  69 passed (69)`; `npm run test:e2e` ends with `16 passed`.
+
+Append one row per command to the run log **with your file-edit tool**, using `T003` for the `git show` row and `T002` for the others, with the real exit code and copied summary lines. Then run the Step 2 check again: it must still print `utf8 ok, no BOM`.
+
+**Step 4 — commit C1a:**
+
+```bash
+git add specs/005-backend-split/run-log.md specs/005-backend-split/implementation-plan.md
+git commit -m "docs(spec): repair 005 run log encoding" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git show --stat --oneline HEAD
+git status --short
+```
+
+Expected: exactly those 2 files in the commit; afterwards `git status --short` shows only `?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md`.
 
 ---
 
@@ -1761,7 +1856,7 @@ Expected: exactly those 7 files.
 
 ```bash
 git branch --show-current
-git log --oneline -7
+git log --oneline -8
 git status --short
 npm ci
 npm run typecheck
@@ -1771,9 +1866,9 @@ npm audit --audit-level=high
 npm run test:e2e
 ```
 
-Expected: branch `005-backend-split`; the top six commits are C5, C4, C3, C2, C1, C0 on top of `8926ec1`; `git status` shows only `?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md`; every check exits 0 with `112 passed` (unit) and `18 passed` (browser).
+Expected: branch `005-backend-split`; the top seven commits are C5, C4, C3, C2, C1a, C1, C0 on top of `8926ec1`; `git status` shows only `?? docs/WEEK_03_REPORT_ALEKSA_DURUTOVIC.md`; every check exits 0 with `112 passed` (unit) and `18 passed` (browser).
 
-Report to the student: the six SHAs, the check results, and the sentence "not pushed, not merged". The student merges into `main` themselves (reviewers read `main`).
+Report to the student: the seven SHAs, the check results, and the sentence "not pushed, not merged". The student merges into `main` themselves (reviewers read `main`).
 
 ---
 
@@ -1847,6 +1942,28 @@ Finish with: completed task IDs, the T002 check results, and the C0 and C1 short
 
 **Student check**: `git log --oneline -3` shows C1, C0, `8926ec1`; `git show --stat HEAD` lists the 4 files; read the new constitution bullets and the new *Lokalni API server* section in `GAME_SPEC.md`.
 
+### Prompt 1a — Run log repair (T003a) — added 2026-09-28
+
+```text
+Pre implementacije:
+1. Sažmi razumevanje zadatka.
+2. Navedi plan u nekoliko koraka.
+3. Navedi nejasnoće ili pretpostavke.
+4. Ne proširuj scope bez eksplicitnog razloga.
+
+Role: You are a coding agent in the Rush Hour Crossing repository, on branch 005-backend-split. Implement task T003a from specs/005-backend-split/implementation-plan.md (section §C1a) and nothing else. Do not start T004.
+
+Rules:
+- Follow the hard rules in §T exactly, especially the new rule 10: create and edit files only with your file-edit tool (apply_patch). Never write files with PowerShell Set-Content, Add-Content, Out-File, > or >>.
+- Do not change .specify/memory/constitution.md, docs/GAME_SPEC.md or docs/AI_USAGE_LOG.md. Do not amend, reset or rewrite any commit.
+- The Step 2 check must print exactly "utf8 ok, no BOM", both before and after you append the T002/T003 rows.
+- If any output differs from the Expected text, or any file write fails, stop before git add, paste the actual output, and report.
+
+Finish with: the Step 2 output, the re-run T002 summary lines, and the C1a short SHA. Then stop.
+```
+
+**Student check**: `git log --oneline -4` shows C1a, C1, C0, `8926ec1`; `git show --stat HEAD` lists only `run-log.md` and `implementation-plan.md`; open `specs/005-backend-split/run-log.md` in your editor — the title dash shows correctly and the table renders. Then continue with Prompt 2.
+
 ### Prompt 2 — Server config, routes and static files (T004–T009)
 
 ```text
@@ -1869,7 +1986,7 @@ Rules:
 Finish with: completed task IDs, the T006 and T008 failing summary lines, the T007 and T009 passing summary lines, and the C2 and C3 short SHAs. Then stop.
 ```
 
-**Student check**: `git log --oneline -5`; `git show --stat HEAD~1` (7 files) and `git show --stat HEAD` (6 files); open `server/app.ts` and follow one request: Host check → `/api` → static.
+**Student check**: `git log --oneline -6`; `git show --stat HEAD~1` (7 files) and `git show --stat HEAD` (6 files); open `server/app.ts` and follow one request: Host check → `/api` → static.
 
 ### Prompt 3 — One origin (T010–T012)
 
@@ -1912,7 +2029,7 @@ Rules:
 - If any output differs from the Expected text, stop, paste the actual output, and report.
 - Do not push and do not merge.
 
-Finish with: the six commit SHAs (C0–C5), the §C6 check results, and the sentence "not pushed, not merged". Then stop.
+Finish with: the seven commit SHAs (C0, C1, C1a, C2–C5), the §C6 check results, and the sentence "not pushed, not merged". Then stop.
 ```
 
-**Student check**: `git log --oneline -7`; read `docs/EVIDENCE_004.md`, the new `security.md` section and the AI log entry; the placeholder `git grep` from §C5 returns nothing. Then merge into `main` yourself when satisfied.
+**Student check**: `git log --oneline -8`; read `docs/EVIDENCE_004.md`, the new `security.md` section and the AI log entry; the placeholder `git grep` from §C5 returns nothing. Then merge into `main` yourself when satisfied.
