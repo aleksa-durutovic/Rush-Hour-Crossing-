@@ -29,3 +29,7 @@ Real command results, appended by the coding agent after every task. Nothing her
 | T007 | `npm run typecheck` | 0 | exit 0, no diagnostics (browser and server projects) |
 | T007 | `npm run build` | 0 | `✓ built in 144ms` |
 | T007 | `npm audit --audit-level=high` | 0 | `found 0 vulnerabilities` |
+| T008 | `npm run test:run` | 1 | `Test Files  1 failed | 10 passed (11)`; `Tests  86 passed (86)`; failure: cannot find `../../server/app` |
+| T009 | `npm run test:run` | 0 | `Test Files  11 passed (11)`; `Tests  112 passed (112)` |
+| T009 | `npm run typecheck` | 0 | exit 0, no diagnostics (browser and server projects) |
+| T009 | `npm run build` | 0 | `✓ built in 118ms` |
