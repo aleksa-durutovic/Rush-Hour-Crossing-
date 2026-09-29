@@ -1,8 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 -> 1.1.1
-- Modified principles: none (Technical Constraints clarification: gameplay
-  moves stay keyboard-only; the difficulty selector may also be used with a mouse)
+- Version change: 1.1.1 -> 1.2.0
+- Modified principles: none
+- Modified sections: Technical Constraints (feature 005 allows a local API server in
+  `server/`: loopback only, Host allowlist, one origin without CORS, no database, no
+  deployment; live AI calls stay prohibited until an accepted specification allows them)
 - Added sections: none
 - Removed sections: none
 - Templates requiring updates: none
@@ -60,9 +62,17 @@ Session 003 evidence artifacts.
 
 ## Technical Constraints
 
-- The approved stack is Vite, strict TypeScript, Canvas 2D, Vitest, and npm.
-- The application is static and browser-only; backend, database, authentication,
-  deployment, live AI calls, and network services are prohibited in Session 003.
+- The approved stack is Vite, strict TypeScript, Canvas 2D, Vitest, npm, and, for the
+  local API server only, the Node.js built-in `node:http` module run with tsx.
+- The game runs in the browser. From feature 005 a local API server in `server/` may
+  serve the built game and `/api` routes from one origin. It MUST bind only to
+  `127.0.0.1`, MUST reject requests whose `Host` header is not on its allowlist, and
+  MUST NOT send CORS headers. Database, authentication, deployment, and external
+  network services remain prohibited. Live AI provider calls remain prohibited until
+  an accepted feature specification allows them, and then only from `server/`.
+- Game rules stay in the pure modules under `src/game/`; the server MUST NOT change
+  them. Secrets, when a later feature needs them, MUST be read only by `server/` from
+  the process environment and MUST never reach the browser bundle.
 - Dependencies MUST be kept to the minimum justified by the locked scope.
 - Accessibility MUST include readable contrast, visible keyboard focus, and no required
   motion. Gameplay moves remain keyboard-only as specified; the difficulty selector
@@ -88,4 +98,4 @@ and a semantic version change: MAJOR for incompatible governance changes, MINOR 
 or materially expanded principles, and PATCH for clarifications. Every review MUST verify
 constitution compliance and justify any added complexity against the locked scope.
 
-**Version**: 1.1.1 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-27
+**Version**: 1.2.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-28

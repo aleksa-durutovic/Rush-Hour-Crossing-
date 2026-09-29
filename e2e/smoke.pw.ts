@@ -284,3 +284,21 @@ test.describe('difficulty selector', () => {
     await expect(page.locator('#game-canvas')).toBeFocused()
   })
 })
+
+test.describe('same-origin API', () => {
+  test('serves the API health check from the game origin', async ({ request }) => {
+    const response = await request.get('/api/health')
+
+    expect(response.status()).toBe(200)
+    expect(response.headers()['content-type']).toBe('application/json; charset=utf-8')
+    expect(response.headers()['access-control-allow-origin']).toBeUndefined()
+    expect(await response.json()).toEqual({ status: 'ok', service: 'rush-hour-crossing-api' })
+  })
+
+  test('answers an unknown API route with a JSON 404', async ({ request }) => {
+    const response = await request.get('/api/does-not-exist')
+
+    expect(response.status()).toBe(404)
+    expect(await response.json()).toEqual({ error: 'NOT_FOUND' })
+  })
+})

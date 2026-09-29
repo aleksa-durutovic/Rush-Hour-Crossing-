@@ -102,6 +102,14 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 - Pravila R1–R6, preseti i determinizam se ne menjaju.
 - Dokaz: `tests/difficulty-query.test.ts`, `e2e/smoke.pw.ts` → *difficulty selector*, screenshot `docs/evidence/difficulty-switch.png`.
 
+## Lokalni API server (feature 005)
+
+- Igra se i dalje igra u browseru; pravila R1–R7, preseti i determinizam se ne menjaju.
+- `server/` je lokalni Node.js server (`node:http`, pokreće ga `tsx`). Sluša samo na `127.0.0.1` i odbija svaki zahtev čiji `Host` nije `127.0.0.1:<port>` ili `localhost:<port>`.
+- Jedan origin: `npm start` servira izgrađenu igru (`dist/`) i `/api`; u razvoju (`npm run dev`) Vite prosleđuje `/api` serveru. CORS nije potreban i ne šalje se.
+- Jedina ruta je `GET /api/health` → `{"status":"ok","service":"rush-hour-crossing-api"}`. Server nema stanje igre, AI poziv, bazu ni tajne.
+- Dokaz: `tests/server/*.test.ts`, `e2e/smoke.pw.ts` → *same-origin API*, `docs/EVIDENCE_004.md` → *Part 0*.
+
 ## Minimalni vizuelni zahtev
 
 - Canvas sa gridom 9×7, fiksna veličina polja (responsive nije obavezan).
@@ -112,7 +120,7 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 
 ## Tehnička granica
 
-TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canvas prikaz. Logika poteza je odvojena od renderovanja (čista funkcija nad stanjem), da evali mogu da rade bez Canvasa. Konkretan izbor alata bira se u planu; nova infrastruktura se ne dodaje.
+TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canvas prikaz. Logika poteza je odvojena od renderovanja (čista funkcija nad stanjem), da evali mogu da rade bez Canvasa. Konkretan izbor alata bira se u planu; nova infrastruktura se ne dodaje, osim lokalnog API servera iz feature 005 (vidi *Lokalni API server*), koji ne menja pravila R1–R7.
 
 ## OUT OF SCOPE
 
@@ -127,7 +135,7 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - procedural generation i RNG saobraćaj
 - AI-controlled vozila ili neprijatelji
 - touch / mobilne kontrole
-- backend, baza, deployment i druga nova infrastruktura
+- baza, deployment i druga nova infrastruktura (izuzetak: lokalni API server u `server/`, feature 005 — samo `127.0.0.1`, bez baze, bez naloga, bez deploy-a)
 
 ## Definition of Done
 
@@ -146,4 +154,4 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
   - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`; svi imaju *Current result*.
 - [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.
-  - Dokaz: nema AI/tool/mreže/backenda; nema `.env` fajlova ni kredencijala u praćenim fajlovima (provera `git ls-files` i `git grep`, 2026-09-23). Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i zabeležen u `AI_USAGE_LOG.md` i ne menja gameplay.
+  - Dokaz: nema AI/tool poziva ni spoljnih mrežnih servisa; jedini backend je lokalni API server iz feature 005 (samo `127.0.0.1`, bez tajni); nema `.env` fajlova ni kredencijala u praćenim fajlovima (provera `git ls-files` i `git grep`, 2026-09-23). Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i zabeležen u `AI_USAGE_LOG.md` i ne menja gameplay.

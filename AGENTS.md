@@ -10,7 +10,8 @@ Read this file before changing the project. It points to the authoritative sourc
 4. `specs/002-voxel-night-city/` — accepted visual addendum. It changes presentation only, never gameplay rules.
 5. `specs/003-review-fixes/` — accepted corrections after the third review: preset invariants (no overlap, winnable), golden paths, and the browser smoke test. It changes preset data and tests only.
 6. `specs/004-difficulty-switch/` — accepted UI addendum: `EASY` / `NORMAL` / `HARD` buttons next to the tick counter. It adds a mouse-operated difficulty selector and changes no rule R1–R6.
-7. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
+7. `specs/005-backend-split/` — accepted infrastructure addendum: a local API server in `server/` that serves the built game and `/api` from one origin (`127.0.0.1` only, `Host` allowlist, no CORS). It changes no rule R1–R7 and adds no AI call.
+8. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
 
 When sources conflict, the higher item wins. Report the conflict; do not resolve it silently.
 
@@ -21,13 +22,16 @@ When sources conflict, the higher item wins. Report the conflict; do not resolve
 - `src/input/` — keyboard-to-action mapping only.
 - `src/render/` — Canvas drawing. Text shown to the player comes from pure helpers such as `end-message.ts`, so it can be tested.
 - `src/main.ts` — wiring only.
-- `tests/` — Vitest unit tests; `tests/fixtures/golden-paths.ts` holds the recorded paths. `e2e/` — Playwright browser tests (`*.pw.ts`). Keep the two separate.
+- `server/` — local Node.js API server (`node:http`, run with tsx). It may import the pure modules in `src/game/` and `src/config/`, never `src/main.ts`, `src/render/`, `src/input/`, or CSS. It is the only code that may read `process.env`; a future provider key lives only here.
+- `src/` never imports `server/` or Node.js built-ins and never reads `process.env` or `import.meta.env` (enforced by `tests/server/boundaries.test.ts`).
+- `scripts/dev.mjs` — starts Vite and the API server together for `npm run dev`.
+- `tests/` — Vitest unit tests; `tests/fixtures/golden-paths.ts` holds the recorded paths; `tests/server/` holds the server tests (type-checked by `tsconfig.server.json`). `e2e/` — Playwright browser tests (`*.pw.ts`), run against `npm start` on `http://127.0.0.1:4173`. Keep the two separate.
 
 ## Required workflow
 
 - Use the Spec Kit skills in `.agents/skills/` (`speckit-specify` → `speckit-plan` → `speckit-tasks` → `speckit-analyze` → `speckit-implement`) for any new feature.
 - Write or update a failing test or eval expectation before changing behaviour.
-- Keep each change to the smallest scope that addresses one stated problem. Record claim, signal, change, and result in `docs/EVIDENCE_003.md`.
+- Keep each change to the smallest scope that addresses one stated problem. Record claim, signal, change, and result in `docs/EVIDENCE_003.md` (Session 004 work: `docs/EVIDENCE_004.md`).
 - Log meaningful AI involvement and decisions in `docs/AI_USAGE_LOG.md`.
 - Never overwrite the baseline tag `s003-baseline-v1`.
 
@@ -49,7 +53,7 @@ Record actual results only. Never claim a check that did not run or did not retu
 
 ## Out of scope for Session 003
 
-Session 004 AI hint and tool calling, backend, database, deployment, network services, audio, touch controls, real-time movement, and new game mechanics. No secrets, tokens, `.env` files, or private URLs in code, prompts, screenshots, or evidence.
+Session 004 AI hint and tool calling (until their own specification is accepted), any backend other than the local API server in `server/`, database, deployment, network services, audio, touch controls, real-time movement, and new game mechanics. No secrets, tokens, `.env` files, or private URLs in code, prompts, screenshots, or evidence.
 
 ## Delivery
 
