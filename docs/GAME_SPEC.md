@@ -110,6 +110,12 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 - Jedina ruta je `GET /api/health` → `{"status":"ok","service":"rush-hour-crossing-api"}`. Server nema stanje igre, AI poziv, bazu ni tajne.
 - Dokaz: `tests/server/*.test.ts`, `e2e/smoke.pw.ts` → *same-origin API*, `docs/EVIDENCE_004.md` → *Part 0*.
 
+## Odloženi AI savet (feature 006 — Option C implementacija odobrena)
+
+- Par je 2026-09-29 odobrio jedan odloženi Gemini savet posle završene igre koristeći Option C sumu; detalji i granice su u `specs/006-ai-feature/spec.md`.
+- Par je 2026-09-29 odobrio scope Option C feature-a, a korisnik je 2026-09-29 zatražio završetak W04 zadatka, uključujući testove i potrebne artefakte; taj zahtev je zabeležen kao odobrenje za implementaciju. Live provider poziv ostaje van automatizovanih provera i zahteva posebno izričito odobrenje.
+- Savet se nikad ne prikazuje tokom igre, ne menja pravila R1–R7, a ključ ostaje server-side. Tool calling, AI Hint tokom igre i druga AI mehanika ostaju van scope-a.
+
 ## Minimalni vizuelni zahtev
 
 - Canvas sa gridom 9×7, fiksna veličina polja (responsive nije obavezan).
@@ -120,11 +126,11 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 
 ## Tehnička granica
 
-TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canvas prikaz. Logika poteza je odvojena od renderovanja (čista funkcija nad stanjem), da evali mogu da rade bez Canvasa. Konkretan izbor alata bira se u planu; nova infrastruktura se ne dodaje, osim lokalnog API servera iz feature 005 (vidi *Lokalni API server*), koji ne menja pravila R1–R7.
+TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canvas prikaz. Logika poteza je odvojena od renderovanja (čista funkcija nad stanjem), da evali mogu da rade bez Canvasa. Konkretan izbor alata bira se u planu; nova infrastruktura se ne dodaje, osim lokalnog API servera iz feature 005 (vidi *Lokalni API server*) i usko odobrenog Option C feature 006 (vidi AI_USAGE_LOG.md), koji ne menjaju pravila R1–R7. Feature 006 može koristiti samo taj lokalni server za odloženi post-game Gemini savet, uz dokumentovano odobrenje feature 006; AI pozivi pripadaju isključivo serveru.
 
 ## OUT OF SCOPE
 
-- AI Hint, tool calling, live AI provider (Sesija 004)
+- AI Hint tokom igre, tool/function calling i AI-controlled traffic ostaju van scope-a (Sesija 004). Live Gemini poziv je izuzetak samo za odobreni delayed post-game Option C feature 006, iz server/ za odobreni feature 006 nakon prihvatanja specifikacije.
 - real-time režim (timer, animacije kretanja)
 - reka, balvani i druge nove mehanike
 - power-upovi, više nivoa, čuvanje napretka
@@ -135,7 +141,7 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - procedural generation i RNG saobraćaj
 - AI-controlled vozila ili neprijatelji
 - touch / mobilne kontrole
-- baza, deployment i druga nova infrastruktura (izuzetak: lokalni API server u `server/`, feature 005 — samo `127.0.0.1`, bez baze, bez naloga, bez deploy-a)
+- baza, deployment i druga nova infrastruktura (izuzetak: lokalni API server u `server/`, feature 005 — samo `127.0.0.1`, bez baze, bez naloga, bez deploy-a; feature 006 dodaje samo jedan advice route na tom serveru, prema odobrenju para)
 
 ## Definition of Done
 
@@ -154,4 +160,4 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
   - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`; svi imaju *Current result*.
 - [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.
-  - Dokaz: nema AI/tool poziva ni spoljnih mrežnih servisa; jedini backend je lokalni API server iz feature 005 (samo `127.0.0.1`, bez tajni); nema `.env` fajlova ni kredencijala u praćenim fajlovima (provera `git ls-files` i `git grep`, 2026-09-23). Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i zabeležen u `AI_USAGE_LOG.md` i ne menja gameplay.
+  - Dokaz: na prvobitnoj proveri 2026-09-23 nije bilo AI/tool poziva ni spoljnih servisa; backend je bio samo lokalni feature 005 server. Dana 2026-09-29 par je odobrio uski Option C feature 006 scope, zabeležen u `AI_USAGE_LOG.md`; implementacija i live AI poziv ostaju iza prihvatanja feature specifikacije. Nema `.env` fajla ili kredencijala u praćenim fajlovima na datum prvobitne provere. Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i ne menja gameplay.

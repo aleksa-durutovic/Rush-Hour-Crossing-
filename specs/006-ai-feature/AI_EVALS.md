@@ -1,38 +1,36 @@
-# AI Feature Evaluation Expectations — Draft
+# AI and lifecycle evaluation expectations — 006-ai-feature
 
-**Status**: Expectations only; not executed  
-**Feature**: Delayed Post-Game AI Advice  
-**Created**: 2026-09-29  
-**Purpose**: Freeze expected behavior before implementation and avoid live Gemini calls in routine tests.
+Expectations were fixed before implementation and the 2026-09-29 pre-implementation run captured the expected red state. All listed automated cases now pass in the recorded full Vitest/E2E runs. No live provider request is part of routine tests.
 
-Use a fake provider and deterministic clock for automated cases. Do not put API keys or real provider payloads in fixtures. Record actual results only after implementation.
-
-## Evaluation Matrix
-
-| ID | Scenario | Setup / Input | Expected result | Actual result |
+| ID | Test surface | Input or action | Expected result | Status |
 |---|---|---|---|---|
-| A1 | First completed game | No prior run; finish one game; fake provider returns valid advice | Summary submitted once; normal end state; no visible advice yet. | Not run |
-| A2 | Next game with advice ready | Complete run one, resolve its advice, play and finish run two | Run-one advice appears once and only after run two ends. Run two is summarized and submitted. | Not run |
-| A3 | Response arrives during next game | Resolve run-one advice while run two is active | Advice stays hidden until run two ends, then appears once. | Not run |
-| A4 | Next game finishes before old request | Keep run-one request pending; finish run two; resolve run-one request late | Run-one job is canceled or invalidated and never shown. Run two's summary is submitted. Late output has no effect. | Not run |
-| A5 | Invalid local summary | Submit missing, out-of-range, or unsupported fields to backend | Stable client error; fake-provider call count is exactly zero. | Not run |
-| A6 | Transient failure then success | Fake provider fails once transiently, then returns valid advice | No more than two provider attempts; valid advice remains hidden until the next game ends. | Not run |
-| A7 | Timeout and exhausted retry | Fake provider never settles; advance controlled clock across both attempt deadlines | Each attempt stops at 15 seconds; total attempts do not exceed two; only the safe unavailable message is shown at the next end. | Not run |
-| A8 | Non-retryable or malformed response | Provider returns invalid structured output or local validation fails | Invalid output is not success or rendered. Deterministic local/schema errors are not retried. | Not run |
-| A9 | One-time consumption and deletion | Resolve advice, finish next run, restart, and render again | Advice is not shown again; previous summary/advice state is cleared after consumption. | Not run |
-| A10 | Existing game behavior | Replay current win/loss golden paths, restart, and difficulty selection | Tick, score, lives, crossings, and end outcomes match existing expectations. AI does not change gameplay. | Not run |
-
-## Test Layers
-
-- **Unit tests**: Advice lifecycle, first-run suppression, hide-until-end, one-time consumption, deletion, supersession, and stale-response rejection.
-- **Backend contract tests**: Valid request/response, invalid local input with zero fake-provider calls, malformed output, safe error mapping, and attempt count.
-- **Timeout tests**: Fake timers/provider promises; assert each attempt ends at 15 seconds and there are at most two attempts.
-- **Browser smoke test**: Complete two short runs with a controlled fake API; assert no first-run advice, no advice during run two, and one previous-run message after run two ends.
-- **Live provider check**: A small, manually triggered confirmation after fake-provider tests pass. Keep it within the W04 development/demo call budget; do not make live calls part of ordinary CI.
-
-## Acceptance Notes
-
-- An HTTP 200 response is not sufficient evidence of success; advice must pass runtime schema and length checks.
-- User-facing failures must not contain provider payloads, stack traces, request headers, or secrets.
-- Each request is associated with one completed run so a stale response cannot attach to a newer game.
-- Every result remains “Not run” until the corresponding check executes.
+| A1 | summary unit | null or active GameState | no completed summary | Pass |
+| A2 | summary unit | valid win state | exact eight fields; no unrelated state | Pass |
+| A3 | summary unit | valid loss with zero crossings | outcome lost, crossings zero, score zero | Pass |
+| A4 | focus unit | loss, zero crossings | focus survival; evidence reports lives lost before crossing | Pass |
+| A5 | focus unit | loss with partial progress | focus goal_progress; evidence reports crossings/target | Pass |
+| A6 | focus unit | completed win | focus general; evidence describes completed goal | Pass |
+| A7 | lifecycle unit | first game ends | no previous advice displayed; one analysis job created | Pass |
+| A8 | lifecycle unit | first response ready during next run | notice remains hidden | Pass |
+| A9 | lifecycle unit | next run completes with ready advice | previous advice appears exactly once | Pass |
+| A10 | lifecycle unit | restart during run with hidden ready advice | advice remains hidden and available for next completed run | Pass |
+| A11 | lifecycle unit | difficulty switch during run with hidden ready advice | advice remains hidden and available for next completed run | Pass |
+| A12 | lifecycle unit | restart or difficulty switch after display | visible notice clears | Pass |
+| A13 | lifecycle unit | prior job still pending at next run end | safe unavailable notice appears immediately; new job starts | Pass |
+| A14 | lifecycle unit | stale old job settles after supersession | no state change and no stale text | Pass |
+| A15 | API integration | valid exact summary | 200 fixed DTO; service called once | Pass |
+| A16 | API integration | each malformed/invalid/cross-field request | stable 4xx; provider call count remains zero | Pass |
+| A17 | API integration | wrong media type, wrong method, oversized body | 415, 405, and 413 respectively; service not called | Pass |
+| A18 | service unit | first transient error then valid tip | exactly two attempts and success | Pass |
+| A19 | service unit | repeated transient errors | no more than two attempts; safe unavailable result | Pass |
+| A20 | service unit | malformed provider DTO or permanent error | one attempt, no retry, safe failure | Pass |
+| A21 | service unit | one provider attempt reaches deadline | abort at 15 seconds; at most one retry if still current | Pass |
+| A22 | boundary test | search src and server imports/environment use | no SDK or environment access from src; SDK import only in adapter | Pass |
+| A23 | browser | ready response after first run then another run | no advice after first run or during second; prior tip after second end | Pass |
+| A24 | browser | ready response, restart and difficulty change mid-run | ready advice remains hidden until next completed run | Pass |
+| A25 | browser | pending previous request when next run ends | unavailable text shown immediately; late response cannot overwrite | Pass |
+| A26 | browser/accessibility | advice includes markup-looking literal text | status region exposes text literally, without creating elements | Pass |
+| A27 | regression | existing golden win/loss paths | same status, tick, lives, crossings, and score | Pass |
+| A28 | browser | reload after an analysis becomes ready but before display | volatile summary/advice state clears; the next post-reload run is treated as the first | Pass |
+| A29 | lifecycle/browser | three runs with timely valid responses | run-one advice appears after run two, and run-two advice appears after run three, each once | Pass |
+| A30 | server environment | temporary dummy .env and missing-file case | local values load only in server code; missing .env does not prevent startup; key is never printed | Pass |

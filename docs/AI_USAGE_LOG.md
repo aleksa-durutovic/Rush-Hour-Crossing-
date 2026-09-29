@@ -60,19 +60,29 @@
 - **Deviation noted**: The feature was specified in one combined plan file instead of the separate Spec Kit spec/plan/tasks files, at the student's request.
 - **Verification signal**: new unit tests failed before the helper and pass after; 6 new browser tests failed before the buttons and pass after; on `18abd71`: typecheck, 8 files / 69 tests, build, audit, and `npm run test:e2e` 16 passed.
 
-<<<<<<< HEAD
-
-## W04 AI feature proposal — 2026-09-29
-
-- **Why AI was involved**: Turn the W04 assignment and the user’s delayed-advice request into a reviewable feature proposal and pre-implementation test expectations.
-- **User decisions captured**: Gemini provider; analyze each finished game, hold advice until the next game ends, 15-second per-attempt timeout, no more than two attempts, and abandon stale analysis when a later game finishes.
-- **Result**: Draft created in specs/005-ai-feature/ and ai-feature-plan/. The .env.example file contains an empty key field. No code, live API request, or executable test was run. Advice focus remains unselected.
-- **Next decision**: Select one focus in ai-feature-plan/feature.md. The constitution-required student-pair scope decision for W04 implementation is pending and must be recorded before code.
-=======
 ## Backend split (feature 005) — 2026-09-28
 
 - **Why AI was involved**: The Session 004 AI hint needs a place where a provider key can live outside the browser. The student asked Claude Code (Opus 5.5) to read the Week 04 materials and the code and to write `specs/005-backend-split/implementation-plan.md` (2026-09-27); OpenAI Codex (Luna 6) implements it step by step.
 - **Decisions recorded (student)**: skeleton only — `GET /api/health`, no game state and no AI on the server yet (DEC-1); Node.js built-in `node:http` run with tsx, new dev dependencies `tsx` and `@types/node` (DEC-2); the frontend stays in `src/`, new `server/` folder, one `package.json` (DEC-3); one origin — Vite forwards `/api` in development and `npm start` serves `dist/` and `/api` together, chosen as the more secure option because no CORS is needed (DEC-4). Plan defaults PD-1–PD-7 (loopback bind, `Host` allowlist, validated `PORT`, static allowlist, fixed errors, ports, boundary test) were accepted with the plan. Constitution 1.1.1 → 1.2.0 and `GAME_SPEC.md` (technical boundary, OUT OF SCOPE, D8, new *Lokalni API server* section) were amended before any server code.
 - **Deviation noted**: As in feature 004, one combined plan file replaces the separate Spec Kit spec/plan/tasks files.
 - **Verification signal**: the server tests failed before each module existed and pass after (`1 failed | 8 passed (9); 69 passed (69)` → `9 passed (9); 83 passed (83)`; `1 failed | 10 passed (11); 86 passed (86)` → `11 passed (11); 112 passed (112)`); the 2 new browser tests failed while the game was served by `vite preview` and pass on the local server (`2 failed; 16 passed` → `18 passed`). On `545b62c`: typecheck (browser and server projects), build, audit (Exit 0; found 0 vulnerabilities), and the student's manual check: "tests all passed, you can continue".
->>>>>>> origin/main
+
+## W04 delayed AI advice — feature 006 — 2026-09-29
+
+- **Why AI was involved**: Convert the W04 assignment and the student's delayed-advice request into a reviewable Option C feature specification, plan, and test-first expectations.
+- **Student-pair scope decision**: The student pair approves the bounded Option C post-game advice feature: survival for a loss with zero crossings, goal_progress for a partial loss, general for a win or unclear evidence. This approval authorizes the scope exception recorded in docs/GAME_SPEC.md. The user’s follow-up request to complete the W04 assignment is recorded as implementation authorization; a live provider call remains separately gated.
+- **User clarifications**: If prior advice is still pending when the next run ends, show the safe unavailable message as that prior job is superseded. Keep ready advice hidden through a mid-run restart or difficulty switch; show it after the next completed run.
+- **Artifacts**: specs/006-ai-feature/ contains the draft spec, checklist, plan, research, data model, API contract, quickstart, tasks, and AI_EVALS.md. ai-feature-plan/feature.md records Option C; ai-feature-plan/speckit-plan.md records the workflow and review gate.
+- **Test-first state**: At this initial planning checkpoint, expected Vitest and Playwright files were written before implementation. The pre-implementation run later recorded the expected missing-module and missing-route failures; the implementation and post-change results are recorded in the next entry.
+- **Secret handling**: .env.example contains an empty GEMINI_API_KEY field and .gitignore excludes local .env files; the local .env value was not read or recorded.
+
+## W04 Option C implementation — feature 006 — 2026-09-29
+
+- **Authorization and scope**: The student pair’s Option C scope approval and the user’s request to complete the W04 assignment authorized implementation. Categories remain survival for a loss with zero crossings, goal_progress for a partial loss, and general for a win or unclear evidence. Existing clarifications govern pending supersession and restart/difficulty behavior.
+- **Changes**: Added exact shared request/response validators, a compact completed-run summary, pure delayed lifecycle, same-origin browser client/controller, server advice service with a fixed timeout/retry policy, Gemini structured-output adapter, `/api/advice`, optional server-only `.env` loading, status region, and API/E2E tests. No game transition code changed.
+- **Test-first signal**: Before implementation, the targeted 6-file run failed in 6 files with 10 failed and 4 passed tests because modules and the route were missing. After the initial implementation, the same set passed 6 files / 38 tests; a later disconnect test was added and final totals are recorded in `docs/EVIDENCE_006.md`.
+- **Provider usage**: No live Gemini request was made. Automated tests use fake providers; the real adapter was type-checked and the SDK is configured for one underlying HTTP attempt per service attempt. No key value or local `.env` content was inspected, printed, copied, or recorded.
+- **Model and limits**: `gemini-3.1-flash-lite`, output schema has one `nextTip` of at most 160 characters, and max output is 120 tokens. Provider account access and live token/cost metadata remain unverified.
+- **Student contributions**: The recorded student-pair contribution is approval of the Option C scope; this conversation records the feature clarifications and implementation request. The supplied record does not identify individual student names or driver/reviewer split, so no individual contribution is invented; add those details before submission.
+- **Verification after clean install**: `npm ci` passed (86 packages added; 0 vulnerabilities); `npm run typecheck` passed; `npm run test:run` passed (16 files / 148 tests); `npm run build` passed; `npm audit --audit-level=high` passed (0 vulnerabilities); `npm run test:e2e` passed (22 tests). Chromium was installed after the first E2E launch reported it missing. A 155-file credential-pattern scan found no matches, `.env` is ignored and untracked, and the browser bundle contains no Gemini SDK/model/key marker.
+- **Assistant/tool involvement**: OpenAI Codex read the W04 assignment/spec artifacts, authored tests before behavior, implemented the feature, and recorded actual checks. Earlier model/research references are retained in the planning section.

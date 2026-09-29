@@ -1,4 +1,7 @@
 import './style.css'
+import { createAdviceController } from './advice/controller'
+import { buildCompletedRunSummary } from './advice/summary'
+import type { AdviceNotice } from './advice/lifecycle'
 import { buildDifficultySearch } from './config/difficulty-query'
 import { DIFFICULTIES, resolveGameConfig } from './config/game-config'
 import { DIFFICULTY_PRESETS } from './config/presets'
@@ -24,6 +27,7 @@ app.innerHTML = `
     </header>
 
     <p id="config-alert" class="config-alert" role="status" hidden></p>
+    <p id="ai-advice" class="ai-advice" role="status" aria-live="polite"></p>
 
     <div class="board-frame">
       <div class="board-stage">
@@ -52,6 +56,7 @@ app.innerHTML = `
 
 const canvas = requireElement<HTMLCanvasElement>('#game-canvas')
 const configAlert = requireElement<HTMLParagraphElement>('#config-alert')
+const adviceRegion = requireElement<HTMLParagraphElement>('#ai-advice')
 const difficultyButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>('#difficulty-switch button[data-difficulty]'),
 )
@@ -61,6 +66,7 @@ let config = configResolution.config
 let lanes = DIFFICULTY_PRESETS[config.difficulty]
 let usedFallback = configResolution.usedFallback
 let state = restartGame(config)
+const advice = createAdviceController(renderAdviceNotice)
 
 if (usedFallback) {
   configAlert.hidden = false
@@ -85,7 +91,17 @@ window.addEventListener('keydown', (event) => {
   }
 
   event.preventDefault()
-  state = command === 'restart' ? restartGame(config) : applyAction(state, command, lanes)
+  if (command === 'restart') {
+    advice.reset('restart')
+    state = restartGame(config)
+  } else {
+    const wasActive = state.status === 'active'
+    state = applyAction(state, command, lanes)
+    if (wasActive && state.status !== 'active') {
+      const summary = buildCompletedRunSummary(state)
+      if (summary) advice.complete(summary)
+    }
+  }
   render()
 })
 
@@ -93,6 +109,7 @@ function selectDifficulty(value: string | undefined): void {
   const difficulty = DIFFICULTIES.find((candidate) => candidate === value)
 
   if (difficulty && difficulty !== config.difficulty) {
+    advice.reset('difficulty')
     config = { ...config, difficulty }
     lanes = DIFFICULTY_PRESETS[difficulty]
     state = restartGame(config)
@@ -120,6 +137,22 @@ function render(): void {
     'aria-label',
     `Rush Hour Crossing. ${state.lives} lives, ${state.crossings} of ${config.crossingsToWin} crossings, score ${state.score}, tick ${state.tick}, status ${state.status}.`,
   )
+}
+
+function renderAdviceNotice(notice: AdviceNotice | null): void {
+  if (!notice) {
+    adviceRegion.textContent = ''
+    return
+  }
+  if (notice.kind === 'unavailable') {
+    adviceRegion.textContent = 'AI advice is currently unavailable.'
+    return
+  }
+  adviceRegion.textContent =
+    'Previous run (' + notice.response.focus + '): ' +
+    notice.response.evidence +
+    ' Tip: ' +
+    notice.response.nextTip
 }
 
 function requireElement<T extends Element>(selector: string): T {

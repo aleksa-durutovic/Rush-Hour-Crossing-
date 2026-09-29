@@ -17,7 +17,7 @@
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json",
     "preview": "vite preview",
-    "test:e2e": "playwright test e2e/smoke.pw.ts",
+    "test:e2e": "playwright test e2e/smoke.pw.ts e2e/advice.pw.ts",
     "evidence:screenshots": "playwright test e2e/evidence.pw.ts"
   },
   "devDependencies": {
@@ -27,5 +27,8 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "@google/genai": "^2.24.0"
   }
 }

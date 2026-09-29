@@ -1,34 +1,33 @@
-# Specification Quality Checklist: Delayed Post-Game AI Advice
+# Specification Checklist: 006-ai-feature
 
-**Purpose**: Check that this draft is clear enough to enter planning  
-**Created**: 2026-09-29  
-**Feature**: ../spec.md
+**Purpose**: Confirm the feature spec is complete and reviewable before design acceptance.
 
-## Content Quality
+**Created**: 2026-09-29
 
-- [x] Focuses on player value and the W04 assignment outcome.
-- [x] Covers the primary user flow in non-implementation language.
-- [x] Includes user scenarios, scope, requirements, success criteria, and assumptions.
-- [x] Keeps advice separate from gameplay rules.
+## Content quality
 
-## Requirement Completeness
+- [x] Focused on user-visible post-game advice behavior.
+- [x] Does not prescribe source-code implementation details in requirements.
+- [x] Uses clear, testable language for lifecycle, failure, and privacy requirements.
+- [x] Scope separates included work from gameplay and provider exclusions.
 
-- [x] Shared first-game / next-game timing is testable.
-- [x] Failure behavior, attempt limit, timeout, and superseded requests are specified.
-- [x] Request and response validation expectations are specified.
-- [x] Edge cases include unavailable provider, late result, reload, restart, and malformed output.
-- [x] Data retention and secret boundaries are identified.
-- [ ] The advice focus is selected from the three proposed options.
-- [ ] The selected focus's exact summary fields and category enum are finalized.
-- [ ] The NEEDS CLARIFICATION marker is resolved before planning.
+## Requirement completeness
 
-## Feature Readiness
+- [x] Each functional requirement is numbered and independently testable.
+- [x] Each user story has prioritized acceptance scenarios.
+- [x] Summary fields and validation limits are defined in the data model.
+- [x] Provider timeout, retry eligibility, error handling, and supersession are defined.
+- [x] Accessibility and literal-text rendering are included.
+- [x] Requirements cover first-run behavior, hidden-ready behavior, restart, difficulty switch, reload, and one-time consumption.
+- [x] Invalid input explicitly requires zero provider calls.
+- [x] Success criteria are measurable.
 
-- [x] Draft acceptance scenarios cover the delayed-display flow.
-- [x] Draft evaluation expectations cover success, invalid input, failure/timeout, malformed output, and sequencing.
-- [ ] Advice claims are tied to metrics from the chosen focus.
-- [ ] Ready for speckit-plan.
+## Clarifications and gates
 
-## Notes
+- [x] Option C is selected and the clarification marker is removed.
+- [x] User lifecycle clarifications are recorded.
+- [x] Student-pair scope approval is recorded in the project log and GAME_SPEC amendment.
+- [x] No unresolved clarification markers remain.
+- [x] The user’s request authorizing implementation is recorded; a live provider request remains separately gated.
 
-The shared lifecycle is specified. Do not generate implementation tasks or start implementation until one advice focus is selected and the required student-pair scope decision is recorded.
+**Checklist result**: Requirements are complete for the user-authorized implementation. Live provider confirmation remains optional and separately gated.
