@@ -13,3 +13,9 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+SKILL.md
+agents/
+assets/
+references/
+report/

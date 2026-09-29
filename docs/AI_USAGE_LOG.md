@@ -59,3 +59,11 @@
 - **Decisions recorded (student)**: three buttons EASY / NORMAL / HARD (DEC-1); a switch restarts the game on the new preset, the active button does nothing (DEC-2); real HTML buttons over the Canvas HUD (DEC-3); the choice is written to the URL (DEC-4); the old screenshots stay, one new screenshot is added (DEC-5). `GAME_SPEC.md` (controls, R7, new *Izbor težine* section) and the constitution (1.1.0 → 1.1.1, mouse allowed for the difficulty selector only) were amended accordingly.
 - **Deviation noted**: The feature was specified in one combined plan file instead of the separate Spec Kit spec/plan/tasks files, at the student's request.
 - **Verification signal**: new unit tests failed before the helper and pass after; 6 new browser tests failed before the buttons and pass after; on `18abd71`: typecheck, 8 files / 69 tests, build, audit, and `npm run test:e2e` 16 passed.
+
+
+## W04 AI feature proposal — 2026-09-29
+
+- **Why AI was involved**: Turn the W04 assignment and the user’s delayed-advice request into a reviewable feature proposal and pre-implementation test expectations.
+- **User decisions captured**: Gemini provider; analyze each finished game, hold advice until the next game ends, 15-second per-attempt timeout, no more than two attempts, and abandon stale analysis when a later game finishes.
+- **Result**: Draft created in specs/005-ai-feature/ and ai-feature-plan/. The .env.example file contains an empty key field. No code, live API request, or executable test was run. Advice focus remains unselected.
+- **Next decision**: Select one focus in ai-feature-plan/feature.md. The constitution-required student-pair scope decision for W04 implementation is pending and must be recorded before code.
