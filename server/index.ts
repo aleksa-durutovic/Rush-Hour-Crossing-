@@ -4,6 +4,8 @@ import { join, resolve } from 'node:path'
 import { createRequestHandler } from './app'
 import { createGeminiProvider } from './advice/gemini-provider'
 import { createAdviceService } from './advice/service'
+import { createGeminiHintProvider } from './agent/gemini-provider'
+import { createHintService } from './agent/hint-service'
 import { loadServerEnvironment } from './environment'
 import { allowedHostsFor, readServerConfig } from './config'
 
@@ -11,13 +13,19 @@ function main(): void {
   loadServerEnvironment()
   const config = readServerConfig(process.env)
   const adviceService = createAdviceService(createGeminiProvider())
+  const hintService = createHintService(createGeminiHintProvider())
   const staticDir = process.argv.includes('--serve-dist') ? resolve('dist') : undefined
 
   if (staticDir && !existsSync(join(staticDir, 'index.html'))) {
     throw new Error('dist/index.html was not found. Run "npm run build" first.')
   }
 
-  const server = createServer(createRequestHandler({ allowedHosts: allowedHostsFor(config.port), staticDir, adviceService }))
+  const server = createServer(createRequestHandler({
+    allowedHosts: allowedHostsFor(config.port),
+    staticDir,
+    adviceService,
+    hintService,
+  }))
 
   server.on('error', (error) => {
     console.error(`Server error: ${error.message}`)

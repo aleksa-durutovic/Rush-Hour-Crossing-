@@ -2,6 +2,9 @@ import './style.css'
 import { createAdviceController } from './advice/controller'
 import { buildCompletedRunSummary } from './advice/summary'
 import type { AdviceNotice } from './advice/lifecycle'
+import { createHintController } from './hints/controller'
+import { describeHintRouteStep, getHintMessage, HINT_LOADING_MESSAGE } from './hints/messages'
+import { createHintSnapshot } from './hints/snapshot'
 import { buildDifficultySearch } from './config/difficulty-query'
 import { DIFFICULTIES, resolveGameConfig } from './config/game-config'
 import { DIFFICULTY_PRESETS } from './config/presets'
@@ -43,6 +46,14 @@ app.innerHTML = `
           ).join('')}
         </div>
       </div>
+      <section id="hint-panel" class="hint-panel" aria-label="Safe-path hint">
+        <button id="hint-toggle" class="hint-toggle" type="button">Hint</button>
+        <div class="hint-content">
+          <span class="hint-spinner" aria-hidden="true" hidden></span>
+          <p id="hint-status" class="hint-status" role="status" aria-live="polite" aria-label="Hint status"></p>
+          <ol id="hint-route" class="hint-route" aria-label="Verified route steps" hidden></ol>
+        </div>
+      </section>
     </div>
 
     <footer class="controls" aria-label="Controls">
@@ -57,6 +68,11 @@ app.innerHTML = `
 const canvas = requireElement<HTMLCanvasElement>('#game-canvas')
 const configAlert = requireElement<HTMLParagraphElement>('#config-alert')
 const adviceRegion = requireElement<HTMLParagraphElement>('#ai-advice')
+const hintButton = requireElement<HTMLButtonElement>('#hint-toggle')
+const hintPanel = requireElement<HTMLElement>('#hint-panel')
+const hintStatus = requireElement<HTMLParagraphElement>('#hint-status')
+const hintSpinner = requireElement<HTMLSpanElement>('.hint-spinner')
+const hintRouteList = requireElement<HTMLOListElement>('#hint-route')
 const difficultyButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>('#difficulty-switch button[data-difficulty]'),
 )
@@ -67,6 +83,7 @@ let lanes = DIFFICULTY_PRESETS[config.difficulty]
 let usedFallback = configResolution.usedFallback
 let state = restartGame(config)
 const advice = createAdviceController(renderAdviceNotice)
+const hint = createHintController(() => render(false), () => createHintSnapshot(state, config))
 
 if (usedFallback) {
   configAlert.hidden = false
@@ -76,6 +93,12 @@ if (usedFallback) {
 for (const button of difficultyButtons) {
   button.addEventListener('click', () => selectDifficulty(button.dataset.difficulty))
 }
+
+hintButton.addEventListener('click', () => {
+  const previousMode = hint.getState().mode
+  hint.activate(createHintSnapshot(state, config))
+  if (previousMode === 'visible' && hint.getState().mode === 'hidden') canvas.focus()
+})
 
 render()
 canvas.focus()
@@ -91,12 +114,18 @@ window.addEventListener('keydown', (event) => {
   }
 
   event.preventDefault()
+  const hintMode = hint.getState().mode
+  if (hintMode === 'loading' || hintMode === 'visible') return
+
   if (command === 'restart') {
+    hint.reset('restart')
     advice.reset('restart')
     state = restartGame(config)
   } else {
     const wasActive = state.status === 'active'
+    const previousLives = state.lives
     state = applyAction(state, command, lanes)
+    if (state.lives !== previousLives) hint.lifeChanged(state.lives)
     if (wasActive && state.status !== 'active') {
       const summary = buildCompletedRunSummary(state)
       if (summary) advice.complete(summary)
@@ -106,9 +135,12 @@ window.addEventListener('keydown', (event) => {
 })
 
 function selectDifficulty(value: string | undefined): void {
+  const hintMode = hint.getState().mode
+  if (hintMode === 'loading' || hintMode === 'visible') return
   const difficulty = DIFFICULTIES.find((candidate) => candidate === value)
 
   if (difficulty && difficulty !== config.difficulty) {
+    hint.reset('difficulty')
     advice.reset('difficulty')
     config = { ...config, difficulty }
     lanes = DIFFICULTY_PRESETS[difficulty]
@@ -123,20 +155,62 @@ function selectDifficulty(value: string | undefined): void {
   canvas.focus()
 }
 
-function render(): void {
-  renderGame(context, state, config, lanes)
+function render(animateTurn = true): void {
+  const hintState = hint.getState()
+  const routeSteps =
+    hintState.mode === 'visible' && hintState.notice?.kind === 'ready' && hintState.notice.response.outcome === 'verified'
+      ? hintState.notice.response.steps
+      : []
+  renderGame(context, state, config, lanes, routeSteps)
   for (const button of difficultyButtons) {
     button.setAttribute('aria-pressed', String(button.dataset.difficulty === config.difficulty))
+    button.disabled = hintState.mode === 'loading' || hintState.mode === 'visible'
   }
   const frame = canvas.closest<HTMLElement>('.board-frame')
   frame?.classList.remove('turn-flash')
-  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+  if (animateTurn && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
     requestAnimationFrame(() => frame?.classList.add('turn-flash'))
   }
   canvas.setAttribute(
     'aria-label',
-    `Rush Hour Crossing. ${state.lives} lives, ${state.crossings} of ${config.crossingsToWin} crossings, score ${state.score}, tick ${state.tick}, status ${state.status}.`,
+    `Rush Hour Crossing. ${state.lives} lives, ${state.crossings} of ${config.crossingsToWin} crossings, score ${state.score}, tick ${state.tick}, status ${state.status}.${routeSteps.length > 0 ? ` Verified route overlay from tick ${hintState.notice?.kind === 'ready' ? hintState.notice.response.origin.tick : state.tick}.` : ''}`,
   )
+  renderHintState(hintState)
+}
+
+function renderHintState(hintState: ReturnType<typeof hint.getState>): void {
+  const paused = hintState.mode === 'loading' || hintState.mode === 'visible'
+  hintPanel.hidden = state.status !== 'active' && hintState.mode !== 'visible'
+  hintButton.hidden = state.status !== 'active' && hintState.mode !== 'visible'
+  hintButton.disabled = hintState.mode === 'loading' || (state.status !== 'active' && hintState.mode !== 'visible')
+  hintButton.textContent = hintState.mode === 'visible' ? 'Hide hint' : 'Hint'
+  hintButton.setAttribute('aria-pressed', String(hintState.mode === 'visible'))
+  hintButton.dataset.paused = String(paused)
+  hintSpinner.hidden = hintState.mode !== 'loading'
+  hintRouteList.replaceChildren()
+
+  if (hintState.mode === 'loading') {
+    hintStatus.textContent = HINT_LOADING_MESSAGE
+    hintRouteList.hidden = true
+    return
+  }
+  if (hintState.mode !== 'visible' || !hintState.notice) {
+    hintStatus.textContent = ''
+    hintRouteList.hidden = true
+    return
+  }
+
+  hintStatus.textContent = getHintMessage(hintState.notice, state.tick)
+  if (hintState.notice.kind === 'ready' && hintState.notice.response.outcome === 'verified') {
+    for (const [index, step] of hintState.notice.response.steps.entries()) {
+      const item = document.createElement('li')
+      item.textContent = describeHintRouteStep(step, index)
+      hintRouteList.append(item)
+    }
+    hintRouteList.hidden = false
+  } else {
+    hintRouteList.hidden = true
+  }
 }
 
 function renderAdviceNotice(notice: AdviceNotice | null): void {

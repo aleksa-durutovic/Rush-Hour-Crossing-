@@ -2,6 +2,7 @@ import { GRID_COLUMNS, GRID_ROWS } from '../game/constants'
 import type { GameConfig, GameState, LaneDefinition } from '../game/state'
 import { getVehicleCells } from '../game/traffic'
 import { getEndStateMessage } from './end-message'
+import type { HintRouteStep } from '../../shared/hint-agent-contract'
 
 export const CELL_SIZE = 64
 export const HUD_HEIGHT = 72
@@ -29,9 +30,10 @@ export function renderGame(
   state: GameState,
   config: GameConfig,
   lanes: readonly LaneDefinition[],
+  hintSteps: readonly HintRouteStep[] = [],
 ): void {
   drawHud(context, state, config)
-  drawBoard(context, state, lanes)
+  drawBoard(context, state, lanes, hintSteps)
   drawEndState(context, state)
 }
 
@@ -54,6 +56,7 @@ function drawBoard(
   context: CanvasRenderingContext2D,
   state: GameState,
   lanes: readonly LaneDefinition[],
+  hintSteps: readonly HintRouteStep[],
 ): void {
   for (let row = 0; row < GRID_ROWS; row += 1) {
     const y = HUD_HEIGHT + row * CELL_SIZE
@@ -76,7 +79,42 @@ function drawBoard(
 
   drawLaneDirections(context, lanes)
   drawVehicles(context, state.tick, lanes)
+  drawHintRoute(context, hintSteps)
   drawPlayer(context, state)
+}
+
+function drawHintRoute(context: CanvasRenderingContext2D, steps: readonly HintRouteStep[]): void {
+  if (steps.length === 0) return
+
+  context.save()
+  context.strokeStyle = '#ffc83d'
+  context.fillStyle = '#ffc83d'
+  context.lineWidth = 4
+  context.globalAlpha = 0.9
+  context.setLineDash([8, 6])
+  context.beginPath()
+  steps.forEach((step, index) => {
+    const x = step.entered.x * CELL_SIZE + CELL_SIZE / 2
+    const y = HUD_HEIGHT + step.entered.y * CELL_SIZE + CELL_SIZE / 2
+    if (index === 0) context.moveTo(x, y)
+    else context.lineTo(x, y)
+  })
+  context.stroke()
+  context.setLineDash([])
+  steps.forEach((step, index) => {
+    const x = step.entered.x * CELL_SIZE + CELL_SIZE / 2
+    const y = HUD_HEIGHT + step.entered.y * CELL_SIZE + CELL_SIZE / 2
+    context.beginPath()
+    context.arc(x, y, 10, 0, Math.PI * 2)
+    context.fill()
+    context.fillStyle = COLORS.ink
+    context.font = '800 10px Consolas, monospace'
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    context.fillText(String(index + 1), x, y)
+    context.fillStyle = '#ffc83d'
+  })
+  context.restore()
 }
 
 function drawLaneDirections(context: CanvasRenderingContext2D, lanes: readonly LaneDefinition[]): void {

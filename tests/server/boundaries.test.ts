@@ -51,7 +51,10 @@ describe('frontend and backend boundaries', () => {
 
   it('only the Gemini provider adapter imports the SDK', () => {
     const importers = typeScriptFiles('server').filter((file) => importSpecifiers(file).includes('@google/genai'))
-    expect(importers).toEqual(['server/advice/gemini-provider.ts'])
+    expect(importers.sort()).toEqual([
+      'server/advice/gemini-provider.ts',
+      'server/agent/gemini-provider.ts',
+    ])
   })
 
   it('src/ never reads environment variables', () => {

@@ -11,7 +11,7 @@ export function applyAction(
     return state
   }
 
-  const player = moveWithinGrid(state.player, action)
+  const player = getActionDestination(state.player, action)
   const collisionBeforeTraffic = hasTrafficAt(player, lanes, state.tick)
   const nextTick = state.tick + 1
   const collisionAfterTraffic = hasTrafficAt(player, lanes, nextTick)
@@ -46,7 +46,7 @@ export function applyAction(
   }
 }
 
-function moveWithinGrid(position: Position, action: PlayerAction): Position {
+export function getActionDestination(position: Position, action: PlayerAction): Position {
   const delta = {
     up: { x: 0, y: -1 },
     down: { x: 0, y: 1 },

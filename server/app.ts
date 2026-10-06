@@ -1,6 +1,13 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { isCompletedRunSummary } from '../shared/advice-contract'
+import {
+  HINT_REQUEST_MAX_BYTES,
+  HINT_RESPONSE_MAX_BYTES,
+  isHintResponse,
+  isHintSnapshot,
+} from '../shared/hint-agent-contract'
 import { AdviceServiceError, type AdviceService } from './advice/service'
+import { type HintService } from './agent/hint-service'
 import { sendJson, sendText } from './responses'
 import { serveStaticFile } from './static'
 
@@ -10,6 +17,7 @@ export interface RequestHandlerOptions {
   /** Built frontend to serve (dist/). Without it only /api routes answer. */
   staticDir?: string
   adviceService?: AdviceService
+  hintService?: HintService
 }
 
 export type RequestHandler = (request: IncomingMessage, response: ServerResponse) => void
@@ -37,7 +45,7 @@ export function createRequestHandler(options: RequestHandlerOptions): RequestHan
 
     const pathname = readPathname(request.url)
     if (pathname === '/api' || pathname.startsWith('/api/')) {
-      handleApi(request, response, pathname, options.adviceService)
+      handleApi(request, response, pathname, options.adviceService, options.hintService)
       return
     }
 
@@ -67,12 +75,20 @@ function handleApi(
   response: ServerResponse,
   pathname: string,
   adviceService?: AdviceService,
+  hintService?: HintService,
 ): void {
   response.setHeader('Cache-Control', 'no-store')
 
   if (pathname === '/api/advice') {
     handleAdvice(request, response, adviceService).catch(() => {
       if (!response.destroyed && !response.headersSent) sendJson(response, 500, { error: 'INTERNAL_ERROR' })
+    })
+    return
+  }
+
+  if (pathname === '/api/hint') {
+    handleHint(request, response, hintService).catch(() => {
+      if (!response.destroyed && !response.headersSent) sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
     })
     return
   }
@@ -117,7 +133,7 @@ async function handleAdvice(
 
   let body: Buffer
   try {
-    body = await readBoundedBody(request)
+    body = await readBoundedBody(request, MAX_ADVICE_REQUEST_BYTES)
   } catch (error) {
     if (error instanceof RequestTooLargeError) sendJson(response, 413, { error: 'REQUEST_TOO_LARGE' })
     else sendJson(response, 400, { error: 'INVALID_REQUEST' })
@@ -163,9 +179,87 @@ async function handleAdvice(
   }
 }
 
+async function handleHint(
+  request: IncomingMessage,
+  response: ServerResponse,
+  hintService?: HintService,
+): Promise<void> {
+  if (request.method !== 'POST') {
+    response.setHeader('Allow', 'POST')
+    sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+    return
+  }
+
+  const contentType = request.headers['content-type']
+  if (typeof contentType !== 'string' || !ADVICE_CONTENT_TYPE.test(contentType)) {
+    sendJson(response, 415, { error: 'UNSUPPORTED_MEDIA_TYPE' })
+    return
+  }
+
+  const declaredLength = Number(request.headers['content-length'] ?? 0)
+  if (Number.isFinite(declaredLength) && declaredLength > HINT_REQUEST_MAX_BYTES) {
+    request.resume()
+    sendJson(response, 413, { error: 'REQUEST_TOO_LARGE' })
+    return
+  }
+
+  let body: Buffer
+  try {
+    body = await readBoundedBody(request, HINT_REQUEST_MAX_BYTES)
+  } catch (error) {
+    if (error instanceof RequestTooLargeError) sendJson(response, 413, { error: 'REQUEST_TOO_LARGE' })
+    else sendJson(response, 400, { error: 'INVALID_REQUEST' })
+    return
+  }
+
+  let value: unknown
+  try {
+    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(body)) as unknown
+  } catch {
+    sendJson(response, 400, { error: 'INVALID_REQUEST' })
+    return
+  }
+
+  if (!isHintSnapshot(value)) {
+    sendJson(response, 400, { error: 'INVALID_REQUEST' })
+    return
+  }
+  if (!hintService) {
+    sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+    return
+  }
+
+  const controller = new AbortController()
+  const abortForDisconnect = (): void => controller.abort()
+  const abortForResponseClose = (): void => {
+    if (!response.writableEnded) controller.abort()
+  }
+  request.once('aborted', abortForDisconnect)
+  response.once('close', abortForResponseClose)
+
+  try {
+    const hint = await hintService.analyze(value, controller.signal)
+    const serialized = JSON.stringify(hint)
+    if (
+      !isHintResponse(hint, value) ||
+      Buffer.byteLength(serialized, 'utf8') > HINT_RESPONSE_MAX_BYTES
+    ) {
+      sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+      return
+    }
+    if (!response.destroyed) sendJson(response, 200, hint)
+  } catch {
+    if (response.destroyed) return
+    sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+  } finally {
+    request.off('aborted', abortForDisconnect)
+    response.off('close', abortForResponseClose)
+  }
+}
+
 class RequestTooLargeError extends Error {}
 
-function readBoundedBody(request: IncomingMessage): Promise<Buffer> {
+function readBoundedBody(request: IncomingMessage, maximumBytes: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
     let size = 0
@@ -185,7 +279,7 @@ function readBoundedBody(request: IncomingMessage): Promise<Buffer> {
     const onData = (chunk: Buffer | string): void => {
       const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
       size += bytes.byteLength
-      if (size > MAX_ADVICE_REQUEST_BYTES) {
+      if (size > maximumBytes) {
         request.resume()
         fail(new RequestTooLargeError())
         return

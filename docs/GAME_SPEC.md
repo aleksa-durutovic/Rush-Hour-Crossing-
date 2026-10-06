@@ -114,7 +114,17 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 
 - Par je 2026-09-29 odobrio jedan odloženi Gemini savet posle završene igre koristeći Option C sumu; detalji i granice su u `specs/006-ai-feature/spec.md`.
 - Par je 2026-09-29 odobrio scope Option C feature-a, a korisnik je 2026-09-29 zatražio završetak W04 zadatka, uključujući testove i potrebne artefakte; taj zahtev je zabeležen kao odobrenje za implementaciju. Live provider poziv ostaje van automatizovanih provera i zahteva posebno izričito odobrenje.
-- Savet se nikad ne prikazuje tokom igre, ne menja pravila R1–R7, a ključ ostaje server-side. Tool calling, AI Hint tokom igre i druga AI mehanika ostaju van scope-a.
+- Ovaj savet se nikad ne prikazuje tokom igre, ne menja pravila R1–R7, a ključ ostaje server-side. Feature 006 sam ne koristi tool calling; jedini odobreni izuzetak za in-game Hint/tool calling opisan je zasebno u feature 007. Druga AI mehanika ostaje van scope-a.
+
+## Ograničeni Hint za sigurnu putanju (feature 007)
+
+- Student-pair je 2026-10-06 odobrio uski izuzetak za jedan igračem pokrenut Hint tokom aktivne igre. Predlog modela može da zatraži samo allowlist alat `find_safe_path` sa praznim argumentima; backend validira predlog i izvršava determinističku pretragu nad trenutnim validiranim stanjem.
+- Uspešan tok ima najviše dva logička koraka modela i jedno izvršenje alata. Odgovor crta samo putanju i trag stanja koje je vratio i backend proverio; model ne bira koordinate, ne pomera igrača i ne menja stanje igre.
+- Hint prikazuje najkraću sigurnu putanju do sledećeg prelaska: prvi bezbedan ulazak u bilo koju kolonu ciljnog reda `y = 0`. Putanja se tu završava i kada `crossingsToWin` zahteva još prelazaka; pravilo pobede ostaje nepromenjeno.
+- Zahtev sadrži samo status, težinu, tick, poziciju igrača, živote, broj prelazaka i cilj prelazaka. Istorija poteza, identifikatori, sačuvani podaci i lični podaci se ne šalju.
+- Dozvoljen je jedan pokušaj Hint-a za svaki preostali broj života u partiji, uključujući grešku ili zastareo rezultat. Gubitak života briše prethodni Hint i omogućava jedan novi pokušaj. Učitavanje i prikazan Hint pauziraju tastaturne poteze; sakrivanje nastavlja igru. Restart ili promena težine resetuju sva iskorišćena prava i keš.
+- Timeout-i, ukupni deadline, broj pokušaja providera i granice solvera definisani su u `specs/007-ai-bounded-feature/spec.md`. Automatizovani testovi koriste fake provider. Odobrenje scope-a ne odobrava live Gemini zahtev.
+- Feature ne menja pravila R1–R7, saobraćaj, poene, živote ili kontrole poteza. Feature 006 ostaje nepromenjen.
 
 ## Minimalni vizuelni zahtev
 
@@ -126,11 +136,11 @@ TypeScript tip sam po sebi nije dokaz: obavezna je **runtime validacija** ulaza.
 
 ## Tehnička granica
 
-TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canvas prikaz. Logika poteza je odvojena od renderovanja (čista funkcija nad stanjem), da evali mogu da rade bez Canvasa. Konkretan izbor alata bira se u planu; nova infrastruktura se ne dodaje, osim lokalnog API servera iz feature 005 (vidi *Lokalni API server*) i usko odobrenog Option C feature 006 (vidi AI_USAGE_LOG.md), koji ne menjaju pravila R1–R7. Feature 006 može koristiti samo taj lokalni server za odloženi post-game Gemini savet, uz dokumentovano odobrenje feature 006; AI pozivi pripadaju isključivo serveru.
+TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canvas prikaz. Logika poteza je odvojena od renderovanja (čista funkcija nad stanjem), da evali mogu da rade bez Canvasa. Konkretan izbor alata bira se u planu; nova infrastruktura se ne dodaje, osim lokalnog API servera iz feature 005 (vidi *Lokalni API server*) i usko odobrenih AI feature-a 006 i 007 (vidi `AI_USAGE_LOG.md` i njihove specifikacije), koji ne menjaju pravila R1–R7. AI pozivi pripadaju isključivo serveru.
 
 ## OUT OF SCOPE
 
-- AI Hint tokom igre, tool/function calling i AI-controlled traffic ostaju van scope-a (Sesija 004). Live Gemini poziv je izuzetak samo za odobreni delayed post-game Option C feature 006, iz server/ za odobreni feature 006 nakon prihvatanja specifikacije.
+- AI Hint tokom igre i tool/function calling ostaju van scope-a osim usko definisanog, odobrenog feature 007 `find_safe_path` toka. AI-controlled traffic i svi drugi AI hintovi, alati i autonomni agenti ostaju van scope-a. Live Gemini pozivi za feature 006/007 i dalje zahtevaju zasebno izričito odobrenje; automatizovani testovi ne zovu providera.
 - real-time režim (timer, animacije kretanja)
 - reka, balvani i druge nove mehanike
 - power-upovi, više nivoa, čuvanje napretka
@@ -141,7 +151,7 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
 - procedural generation i RNG saobraćaj
 - AI-controlled vozila ili neprijatelji
 - touch / mobilne kontrole
-- baza, deployment i druga nova infrastruktura (izuzetak: lokalni API server u `server/`, feature 005 — samo `127.0.0.1`, bez baze, bez naloga, bez deploy-a; feature 006 dodaje samo jedan advice route na tom serveru, prema odobrenju para)
+- baza, deployment i druga nova infrastruktura (izuzetak: lokalni API server u `server/`, feature 005 — samo `127.0.0.1`, bez baze, bez naloga, bez deploy-a; feature-i 006 i 007 dodaju samo svoje odobrene rute na taj server)
 
 ## Definition of Done
 
@@ -159,5 +169,5 @@ TypeScript/JavaScript browser aplikacija na postojećem starteru, HTML/CSS/Canva
   - Dokaz: `tests/reachability.test.ts` (pretraga nalazi pobedu bez gubitka života — najkraće 6 / 11 / 15 poteza za `easy` / `normal` / `hard` — i poraz; snimljene putanje iz `tests/fixtures/golden-paths.ts` pobeđuju i gube), `e2e/smoke.pw.ts` (iste putanje u pravom browseru, zaključan input posle kraja i restart sa `R`; `npm run test:e2e`), `tests/end-message.test.ts` (tekst poruke odgovara statusu); screenshotovi `docs/evidence/d6-win.png`, `docs/evidence/d6-win-normal.png`, `docs/evidence/d6-win-hard.png` i `docs/evidence/d6-loss.png`; zapis u `EVIDENCE_003.md` → *Part 1 — Current state* → *Browser checks*.
 - [x] **D7** `EVALS.md` ima najmanje 4 slučaja sa očekivanjem upisanim pre pokretanja.
   - Dokaz: `EVALS.md` E1–E4 (tipičan, granični, nevalidan, regresioni); E1–E3 upisani pre implementacije u commitu `3221951`; svi imaju *Current result*.
-- [x] **D8** Ništa iz OUT OF SCOPE nije dodato i u repou nema tajni.
-  - Dokaz: na prvobitnoj proveri 2026-09-23 nije bilo AI/tool poziva ni spoljnih servisa; backend je bio samo lokalni feature 005 server. Dana 2026-09-29 par je odobrio uski Option C feature 006 scope, zabeležen u `AI_USAGE_LOG.md`; implementacija i live AI poziv ostaju iza prihvatanja feature specifikacije. Nema `.env` fajla ili kredencijala u praćenim fajlovima na datum prvobitne provere. Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i ne menja gameplay.
+- [x] **D8** Nijedna neodobrena stavka iz OUT OF SCOPE nije dodata i u repou nema tajni.
+  - Dokaz: prvobitna provera 2026-09-23 i odobreni izuzeci feature-a 006 (2026-09-29) i 007 (2026-10-06) zabeleženi su u `AI_USAGE_LOG.md`; feature 007 je ograničen na solver-verifikovani Hint, bez promene pravila R1–R7. Live AI zahtevi ostaju posebno odobrenje. Nema `.env` fajla ili kredencijala u praćenim fajlovima na datum provere. Vizuelni izuzetak (bitmap pozadina, diskretna animacija) odobren je i ne menja gameplay.
