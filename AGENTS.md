@@ -11,7 +11,15 @@ Read this file before changing the project. It points to the authoritative sourc
 5. `specs/003-review-fixes/` — accepted corrections after the third review: preset invariants (no overlap, winnable), golden paths, and the browser smoke test. It changes preset data and tests only.
 6. `specs/004-difficulty-switch/` — accepted UI addendum: `EASY` / `NORMAL` / `HARD` buttons next to the tick counter. It adds a mouse-operated difficulty selector and changes no rule R1–R6.
 7. `specs/005-backend-split/` — accepted infrastructure addendum: a local API server in `server/` that serves the built game and `/api` from one origin (`127.0.0.1` only, `Host` allowlist, no CORS). It changes no rule R1–R7 and adds no AI call.
-8. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
+8. `specs/006-ai-feature/` — accepted delayed post-game advice. Preserve the provider
+   boundary and delayed lifecycle when working on later features.
+9. `specs/007-agent-level-generator/` — user-approved Week 05 addendum: bounded five-lane
+   traffic generation, one read-only solver tool, verified preview, explicit player approval.
+   Read `IMPLEMENTATION_GUIDE.md` first for the Luna 6 handoff; it contains no source code.
+10. `specs/008-model-failover/` — user-approved bounded backup-model extension for both
+    AI operations. Read `IMPLEMENTATION_GUIDE.md` first. Failover is disabled by default;
+    the selected backup is Gemini 2.5 Flash (`gemini-2.5-flash`). No live provider call is authorized.
+11. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
 
 When sources conflict, the higher item wins. Report the conflict; do not resolve it silently.
 
@@ -22,6 +30,12 @@ When sources conflict, the higher item wins. Report the conflict; do not resolve
 - `src/input/` — keyboard-to-action mapping only.
 - `src/render/` — Canvas drawing. Text shown to the player comes from pure helpers such as `end-message.ts`, so it can be tested.
 - `src/main.ts` — wiring only.
+- Feature 007: pure solver state/metrics stay in `src/game/` and range/configuration policy
+  in `src/config/`; timing, provider decisions and tool dispatch stay in `server/`.
+  Browser generator lifecycle/client/controller stay in `src/level-generator/`.
+- Feature 008: enabled routing and attempt accounting stay server-side; one selected backup
+  is used sequentially within the existing operation budgets. It does not alter generator
+  proof/approval or advice delay requirements.
 - `server/` — local Node.js API server (`node:http`, run with tsx). It may import the pure modules in `src/game/` and `src/config/`, never `src/main.ts`, `src/render/`, `src/input/`, or CSS. It is the only code that may read `process.env`; a future provider key lives only here.
 - `src/` never imports `server/` or Node.js built-ins and never reads `process.env` or `import.meta.env` (enforced by `tests/server/boundaries.test.ts`).
 - `scripts/dev.mjs` — starts Vite and the API server together for `npm run dev`.
@@ -33,6 +47,8 @@ When sources conflict, the higher item wins. Report the conflict; do not resolve
 - Write or update a failing test or eval expectation before changing behaviour.
 - Keep each change to the smallest scope that addresses one stated problem. Record claim, signal, change, and result in `docs/EVIDENCE_003.md` (Session 004 work: `docs/EVIDENCE_004.md`).
 - Log meaningful AI involvement and decisions in `docs/AI_USAGE_LOG.md`.
+- Week 05 claim, signal, change, result and run evidence go in `docs/EVIDENCE_W05.md`.
+  The feature 007 Windows boundary-test failure must be corrected before feature code.
 - Never overwrite the baseline tag `s003-baseline-v1`.
 
 ## Checks before every commit

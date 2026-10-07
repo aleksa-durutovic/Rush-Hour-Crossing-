@@ -1,6 +1,6 @@
 export type AdviceFocus = 'survival' | 'goal_progress' | 'general'
 export type RunOutcome = 'won' | 'lost'
-export type AdviceDifficulty = 'easy' | 'normal' | 'hard'
+export type AdviceDifficulty = 'easy' | 'normal' | 'hard' | 'generated'
 
 export interface CompletedRunSummary {
   outcome: RunOutcome
@@ -53,7 +53,10 @@ export function isCompletedRunSummary(value: unknown): value is CompletedRunSumm
   }
 
   if (value.outcome !== 'won' && value.outcome !== 'lost') return false
-  if (value.difficulty !== 'easy' && value.difficulty !== 'normal' && value.difficulty !== 'hard') return false
+  if (
+    value.difficulty !== 'easy' && value.difficulty !== 'normal' &&
+    value.difficulty !== 'hard' && value.difficulty !== 'generated'
+  ) return false
   if (!isSafeIntegerInRange(value.ticks, 1)) return false
   if (!isSafeIntegerInRange(value.targetCrossings, 1, 10)) return false
   if (!isSafeIntegerInRange(value.crossings, 0, value.targetCrossings)) return false

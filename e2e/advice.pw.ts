@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { WINNING_PATHS } from '../tests/fixtures/golden-paths'
+import { getGeneratedLevelTemplate } from '../src/config/generated-level'
+import { measureTraffic } from '../src/game/level-metrics'
+import { getTrafficPeriod } from '../src/game/solve-level'
 import { playActions } from './support'
 
 const readyAdvice = {
@@ -95,7 +98,10 @@ test.describe('delayed Option C advice', () => {
     }))
 
     await page.goto('/?crossingsToWin=1&difficulty=easy')
+    const firstAdviceResponse = page.waitForResponse('**/api/advice')
     await playActions(page, WINNING_PATHS.easy.actions)
+    await firstAdviceResponse
+    await expect(page.locator('#ai-advice')).toHaveText('')
     await page.keyboard.press('r')
     await playActions(page, WINNING_PATHS.easy.actions)
 
@@ -147,5 +153,44 @@ test.describe('delayed Option C advice', () => {
     await expect.poll(() => requests).toBe(2)
     await firstFinished
     await expect(page.locator('#ai-advice')).not.toContainText('This stale tip must not appear.')
+  })
+
+  test('delays coaching for a generated run and labels its origin', async ({ page }) => {
+    const lanes = getGeneratedLevelTemplate(1)
+    await page.route('**/api/levels/generate', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        runId: 'run-generated-advice', status: 'completed', stopReason: 'goal_completed', completed: true,
+        counters: { stepCount: 2, providerAttemptCount: 2, retryCount: 0, toolCallCount: 2, modelToolCallCount: 1, revisionCount: 0 },
+        elapsedMs: 80, kind: 'preview', source: 'generated', settings: { lives: 3, crossingsToWin: 1 }, lanes,
+        requestedDifficulty: 1, computedDifficulty: 1, verified: true,
+        measurements: { firstCrossingMinMoves: 6, minMoves: 6, ...measureTraffic(lanes), trafficPeriod: getTrafficPeriod(lanes), exploredStates: 100, actionEvaluations: 500 },
+        summary: 'Verified level meets the requested rating and full crossing target.',
+      }),
+    }))
+    let requestCount = 0
+    await page.route('**/api/advice', async (route) => {
+      requestCount += 1
+      expect(route.request().postDataJSON()).toMatchObject({ outcome: 'won', difficulty: 'generated', targetCrossings: 1 })
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(readyAdvice) })
+    })
+
+    await page.goto('/?crossingsToWin=1&difficulty=normal')
+    await page.getByLabel('Target challenge rating').selectOption('1')
+    await page.getByRole('button', { name: 'Generate level' }).click()
+    await page.getByRole('button', { name: 'Play this level' }).click()
+    await expect(page.locator('#ai-advice')).toHaveText('')
+    const firstAdviceResponse = page.waitForResponse('**/api/advice')
+    await playActions(page, WINNING_PATHS.easy.actions)
+    await firstAdviceResponse
+    await expect.poll(() => requestCount).toBe(1)
+    await expect(page.locator('#ai-advice')).toHaveText('')
+    await page.keyboard.press('r')
+    const secondAdviceResponse = page.waitForResponse('**/api/advice')
+    await playActions(page, WINNING_PATHS.easy.actions)
+    await secondAdviceResponse
+    await expect.poll(() => requestCount).toBe(2)
+    await expect(page.locator('#ai-advice')).toContainText(readyAdvice.nextTip)
   })
 })

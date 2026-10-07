@@ -7,6 +7,7 @@ import {
   type AdviceProvider,
 } from '../../server/advice/service'
 import type { CompletedRunSummary } from '../../shared/advice-contract'
+import { ProviderFailure, type FailoverEvidenceEvent } from '../../server/ai/failover-policy'
 
 const summary: CompletedRunSummary = {
   outcome: 'lost',
@@ -43,6 +44,7 @@ describe('bounded advice service', () => {
     expect(fake.generateTip).toHaveBeenCalledWith(
       expect.objectContaining({ summary, focus: 'survival', evidence: expect.any(String) }),
       expect.any(AbortSignal),
+      { timeoutMs: ADVICE_ATTEMPT_TIMEOUT_MS },
     )
     expect(Object.keys(fake.generateTip.mock.calls[0][0]).sort()).toEqual(['evidence', 'focus', 'summary'])
     expect(Object.keys(fake.generateTip.mock.calls[0][0].summary).sort()).toEqual([
@@ -54,6 +56,22 @@ describe('bounded advice service', () => {
       'startingLives',
       'targetCrossings',
       'ticks',
+    ])
+  })
+
+  it('passes generated as one of the same eight summary fields to delayed coaching', async () => {
+    const generated = { ...summary, difficulty: 'generated' } as CompletedRunSummary
+    const fake = provider()
+    fake.generateTip.mockResolvedValue(validTip)
+
+    await expect(createAdviceService(fake).analyze(generated, new AbortController().signal)).resolves.toMatchObject({
+      focus: 'survival',
+      nextTip: validTip.nextTip,
+    })
+    const receivedSummary = fake.generateTip.mock.calls[0]?.[0].summary
+    expect(receivedSummary).toEqual(generated)
+    expect(Object.keys(receivedSummary ?? {}).sort()).toEqual([
+      'crossings', 'difficulty', 'outcome', 'remainingLives', 'score', 'startingLives', 'targetCrossings', 'ticks',
     ])
   })
 
@@ -160,5 +178,84 @@ describe('bounded advice service', () => {
 
     await expect(pending).rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
     expect(fake.generateTip).toHaveBeenCalledTimes(1)
+  })
+
+  it('switches once to the backup within the shared phase and preserves the exact validated input', async () => {
+    const primary = provider()
+    const backup = provider()
+    primary.generateTip.mockRejectedValue(new ProviderFailure('rate_limit'))
+    backup.generateTip.mockResolvedValue(validTip)
+
+    const result = await createAdviceService(primary, {
+      enabled: true,
+      backupProvider: backup,
+    }).analyze(summary, new AbortController().signal)
+
+    expect(result).toEqual({
+      focus: 'survival',
+      evidence: 'You lost all 3 lives before completing a crossing.',
+      nextTip: validTip.nextTip,
+    })
+    expect(primary.generateTip).toHaveBeenCalledOnce()
+    expect(backup.generateTip).toHaveBeenCalledOnce()
+    expect(backup.generateTip).toHaveBeenCalledWith(
+      expect.objectContaining({ summary, focus: 'survival', evidence: expect.any(String) }),
+      expect.any(AbortSignal),
+      expect.objectContaining({ timeoutMs: 7_000 }),
+    )
+    expect(Object.keys(result).sort()).toEqual(['evidence', 'focus', 'nextTip'])
+  })
+
+  it('does not use backup for invalid provider output or cancellation between roles', async () => {
+    const primary = provider()
+    const backup = provider()
+    primary.generateTip.mockResolvedValue({ nextTip: '', extra: 'invalid' })
+    await expect(createAdviceService(primary, { enabled: true, backupProvider: backup })
+      .analyze(summary, new AbortController().signal)).rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
+    expect(backup.generateTip).not.toHaveBeenCalled()
+
+    const controller = new AbortController()
+    primary.generateTip.mockImplementationOnce(async () => {
+      controller.abort()
+      throw new ProviderFailure('rate_limit')
+    })
+    await expect(createAdviceService(primary, { enabled: true, backupProvider: backup })
+      .analyze(summary, controller.signal)).rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
+    expect(backup.generateTip).not.toHaveBeenCalled()
+  })
+
+  it('caps a hanging primary and backup together at the shared 15-second advice phase', async () => {
+    vi.useFakeTimers()
+    const primary = provider()
+    const backup = provider()
+    primary.generateTip.mockImplementation(() => new Promise<never>(() => undefined))
+    backup.generateTip.mockImplementation(() => new Promise<never>(() => undefined))
+    const controller = new AbortController()
+    const pending = createAdviceService(primary, { enabled: true, backupProvider: backup, now: () => Date.now() })
+      .analyze(summary, controller.signal)
+    const rejected = expect(pending).rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
+    await vi.advanceTimersByTimeAsync(15_000)
+    await rejected
+    expect(primary.generateTip).toHaveBeenCalledOnce()
+    expect(backup.generateTip).toHaveBeenCalledOnce()
+    expect(primary.generateTip.mock.calls[0]?.[2]).toEqual({ timeoutMs: 8_000 })
+    expect(backup.generateTip.mock.calls[0]?.[2]).toEqual({ timeoutMs: 7_000 })
+  })
+
+  it('records a safe terminal unavailable event after both advice providers fail', async () => {
+    const primary = provider()
+    const backup = provider()
+    primary.generateTip.mockRejectedValue(new ProviderFailure('rate_limit'))
+    backup.generateTip.mockRejectedValue(new ProviderFailure('temporary_unavailable'))
+    const events: FailoverEvidenceEvent[] = []
+    await expect(createAdviceService(primary, {
+      enabled: true,
+      backupProvider: backup,
+      onEvidence: event => events.push(event),
+    }).analyze(summary, new AbortController().signal)).rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
+    expect(events).toContainEqual(expect.objectContaining({
+      operation: 'advice', event: 'operation_unavailable', status: 'unavailable', providerAttemptCount: 2,
+    }))
+    expect(JSON.stringify(events)).not.toMatch(/private|prompt|summary|tip|secret|exception/i)
   })
 })

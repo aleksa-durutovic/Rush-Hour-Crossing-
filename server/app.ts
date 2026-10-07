@@ -1,13 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { isCompletedRunSummary } from '../shared/advice-contract'
-import {
-  HINT_REQUEST_MAX_BYTES,
-  HINT_RESPONSE_MAX_BYTES,
-  isHintResponse,
-  isHintSnapshot,
-} from '../shared/hint-agent-contract'
+import { generationRequestSchema, generationResponseSchema } from '../shared/level-generator-contract'
 import { AdviceServiceError, type AdviceService } from './advice/service'
-import { type HintService } from './agent/hint-service'
+import { InvalidGenerationRequestError, type LevelGeneratorService } from './level-generator/service'
 import { sendJson, sendText } from './responses'
 import { serveStaticFile } from './static'
 
@@ -17,7 +12,7 @@ export interface RequestHandlerOptions {
   /** Built frontend to serve (dist/). Without it only /api routes answer. */
   staticDir?: string
   adviceService?: AdviceService
-  hintService?: HintService
+  generationService?: LevelGeneratorService
 }
 
 export type RequestHandler = (request: IncomingMessage, response: ServerResponse) => void
@@ -26,7 +21,10 @@ export const HEALTH_RESPONSE = { status: 'ok', service: 'rush-hour-crossing-api'
 
 const READ_METHODS: readonly string[] = ['GET', 'HEAD']
 const MAX_ADVICE_REQUEST_BYTES = 4096
+const MAX_GENERATION_REQUEST_BYTES = 2048
+const MAX_GENERATION_RESPONSE_BYTES = 16_384
 const ADVICE_CONTENT_TYPE = /^application\/json(?:\s*;\s*charset=utf-8)?$/i
+const GENERATION_CONTENT_TYPE = /^application\/json(?:\s*;\s*charset=utf-8)?$/i
 
 const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   'X-Content-Type-Options': 'nosniff',
@@ -35,6 +33,7 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
 }
 
 export function createRequestHandler(options: RequestHandlerOptions): RequestHandler {
+  const generatorRun = { active: false }
   return (request, response) => {
     for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value)
 
@@ -45,7 +44,7 @@ export function createRequestHandler(options: RequestHandlerOptions): RequestHan
 
     const pathname = readPathname(request.url)
     if (pathname === '/api' || pathname.startsWith('/api/')) {
-      handleApi(request, response, pathname, options.adviceService, options.hintService)
+      handleApi(request, response, pathname, options.adviceService, options.generationService, generatorRun)
       return
     }
 
@@ -75,7 +74,8 @@ function handleApi(
   response: ServerResponse,
   pathname: string,
   adviceService?: AdviceService,
-  hintService?: HintService,
+  generationService?: LevelGeneratorService,
+  generatorRun: { active: boolean } = { active: false },
 ): void {
   response.setHeader('Cache-Control', 'no-store')
 
@@ -86,9 +86,9 @@ function handleApi(
     return
   }
 
-  if (pathname === '/api/hint') {
-    handleHint(request, response, hintService).catch(() => {
-      if (!response.destroyed && !response.headersSent) sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+  if (pathname === '/api/levels/generate') {
+    handleGenerate(request, response, generationService, generatorRun).catch(() => {
+      if (!response.destroyed && !response.headersSent) sendJson(response, 500, { error: 'INTERNAL_ERROR' })
     })
     return
   }
@@ -179,10 +179,11 @@ async function handleAdvice(
   }
 }
 
-async function handleHint(
+async function handleGenerate(
   request: IncomingMessage,
   response: ServerResponse,
-  hintService?: HintService,
+  generationService: LevelGeneratorService | undefined,
+  generatorRun: { active: boolean },
 ): Promise<void> {
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
@@ -191,13 +192,15 @@ async function handleHint(
   }
 
   const contentType = request.headers['content-type']
-  if (typeof contentType !== 'string' || !ADVICE_CONTENT_TYPE.test(contentType)) {
+  if (typeof contentType !== 'string' || !GENERATION_CONTENT_TYPE.test(contentType)) {
     sendJson(response, 415, { error: 'UNSUPPORTED_MEDIA_TYPE' })
     return
   }
 
-  const declaredLength = Number(request.headers['content-length'] ?? 0)
-  if (Number.isFinite(declaredLength) && declaredLength > HINT_REQUEST_MAX_BYTES) {
+  const declaredLength = request.headers['content-length'] === undefined
+    ? 0
+    : Number(request.headers['content-length'])
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_GENERATION_REQUEST_BYTES) {
     request.resume()
     sendJson(response, 413, { error: 'REQUEST_TOO_LARGE' })
     return
@@ -205,30 +208,37 @@ async function handleHint(
 
   let body: Buffer
   try {
-    body = await readBoundedBody(request, HINT_REQUEST_MAX_BYTES)
+    body = await readBoundedBody(request, MAX_GENERATION_REQUEST_BYTES)
   } catch (error) {
     if (error instanceof RequestTooLargeError) sendJson(response, 413, { error: 'REQUEST_TOO_LARGE' })
-    else sendJson(response, 400, { error: 'INVALID_REQUEST' })
+    else sendJson(response, 400, { error: 'INVALID_GENERATION_REQUEST' })
     return
   }
 
-  let value: unknown
+  let parsedRequest: unknown
   try {
-    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(body)) as unknown
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(body)
+    parsedRequest = JSON.parse(text) as unknown
   } catch {
-    sendJson(response, 400, { error: 'INVALID_REQUEST' })
+    sendJson(response, 400, { error: 'INVALID_GENERATION_REQUEST' })
     return
   }
 
-  if (!isHintSnapshot(value)) {
-    sendJson(response, 400, { error: 'INVALID_REQUEST' })
+  const validatedRequest = generationRequestSchema.safeParse(parsedRequest)
+  if (!validatedRequest.success) {
+    sendJson(response, 400, { error: 'INVALID_GENERATION_REQUEST' })
     return
   }
-  if (!hintService) {
-    sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+  if (!generationService) {
+    sendJson(response, 500, { error: 'INTERNAL_ERROR' })
+    return
+  }
+  if (generatorRun.active) {
+    sendJson(response, 409, { error: 'GENERATION_BUSY' })
     return
   }
 
+  generatorRun.active = true
   const controller = new AbortController()
   const abortForDisconnect = (): void => controller.abort()
   const abortForResponseClose = (): void => {
@@ -238,22 +248,30 @@ async function handleHint(
   response.once('close', abortForResponseClose)
 
   try {
-    const hint = await hintService.analyze(value, controller.signal)
-    const serialized = JSON.stringify(hint)
-    if (
-      !isHintResponse(hint, value) ||
-      Buffer.byteLength(serialized, 'utf8') > HINT_RESPONSE_MAX_BYTES
-    ) {
-      sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+    const result = await generationService.generate(validatedRequest.data, controller.signal)
+    if (controller.signal.aborted || response.destroyed) return
+    const validatedResponse = generationResponseSchema.safeParse(result)
+    if (!validatedResponse.success) {
+      sendJson(response, 500, { error: 'INTERNAL_ERROR' })
       return
     }
-    if (!response.destroyed) sendJson(response, 200, hint)
-  } catch {
+    const serialized = JSON.stringify(validatedResponse.data)
+    if (Buffer.byteLength(serialized, 'utf8') > MAX_GENERATION_RESPONSE_BYTES) {
+      sendJson(response, 500, { error: 'INTERNAL_ERROR' })
+      return
+    }
+    sendJson(response, 200, validatedResponse.data)
+  } catch (error) {
     if (response.destroyed) return
-    sendJson(response, 503, { error: 'HINT_UNAVAILABLE' })
+    if (error instanceof InvalidGenerationRequestError) {
+      sendJson(response, 400, { error: 'INVALID_GENERATION_REQUEST' })
+    } else {
+      sendJson(response, 500, { error: 'INTERNAL_ERROR' })
+    }
   } finally {
     request.off('aborted', abortForDisconnect)
     response.off('close', abortForResponseClose)
+    generatorRun.active = false
   }
 }
 

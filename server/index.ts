@@ -2,18 +2,35 @@ import { existsSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { join, resolve } from 'node:path'
 import { createRequestHandler } from './app'
-import { createGeminiProvider } from './advice/gemini-provider'
+import { createGeminiBackupAdapters, createGeminiGeneratorModel, createGeminiProvider } from './advice/gemini-provider'
 import { createAdviceService } from './advice/service'
-import { createGeminiHintProvider } from './agent/gemini-provider'
-import { createHintService } from './agent/hint-service'
+import { createLevelGeneratorService } from './level-generator/service'
 import { loadServerEnvironment } from './environment'
 import { allowedHostsFor, readServerConfig } from './config'
+import { createProviderSet, GEMINI_BACKUP_PROFILE, readProviderConfig } from './ai/provider-config'
+import type { FailoverEvidenceEvent } from './ai/failover-policy'
+
+function writeFailoverEvidence(event: FailoverEvidenceEvent): void {
+  console.info(`AI failover ${JSON.stringify(event)}`)
+}
 
 function main(): void {
   loadServerEnvironment()
   const config = readServerConfig(process.env)
-  const adviceService = createAdviceService(createGeminiProvider())
-  const hintService = createHintService(createGeminiHintProvider())
+  const providerConfig = readProviderConfig(process.env, GEMINI_BACKUP_PROFILE)
+  const providers = createProviderSet(providerConfig, () => createGeminiBackupAdapters())
+  const backup = providers.backup
+  const adviceService = createAdviceService(createGeminiProvider(), {
+    enabled: providers.enabled,
+    backupProvider: backup?.advice,
+    onEvidence: writeFailoverEvidence,
+  })
+  const generationService = createLevelGeneratorService({
+    model: createGeminiGeneratorModel(),
+    failoverEnabled: providers.enabled,
+    backupModel: backup?.generator,
+    onEvidence: writeFailoverEvidence,
+  })
   const staticDir = process.argv.includes('--serve-dist') ? resolve('dist') : undefined
 
   if (staticDir && !existsSync(join(staticDir, 'index.html'))) {
@@ -21,10 +38,7 @@ function main(): void {
   }
 
   const server = createServer(createRequestHandler({
-    allowedHosts: allowedHostsFor(config.port),
-    staticDir,
-    adviceService,
-    hintService,
+    allowedHosts: allowedHostsFor(config.port), staticDir, adviceService, generationService,
   }))
 
   server.on('error', (error) => {

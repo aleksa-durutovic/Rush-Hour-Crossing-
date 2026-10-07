@@ -11,7 +11,7 @@ import { requestAdvice } from './client'
 
 export interface AdviceController {
   complete(summary: CompletedRunSummary): void
-  reset(reason: 'restart' | 'difficulty'): void
+  reset(reason: 'restart' | 'difficulty' | 'generated'): void
 }
 
 export function createAdviceController(render: (notice: AdviceNotice | null) => void): AdviceController {

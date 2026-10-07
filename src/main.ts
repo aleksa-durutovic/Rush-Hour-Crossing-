@@ -2,16 +2,15 @@ import './style.css'
 import { createAdviceController } from './advice/controller'
 import { buildCompletedRunSummary } from './advice/summary'
 import type { AdviceNotice } from './advice/lifecycle'
-import { createHintController } from './hints/controller'
-import { describeHintRouteStep, getHintMessage, HINT_LOADING_MESSAGE } from './hints/messages'
-import { createHintSnapshot } from './hints/snapshot'
 import { buildDifficultySearch } from './config/difficulty-query'
 import { DIFFICULTIES, resolveGameConfig } from './config/game-config'
 import { DIFFICULTY_PRESETS } from './config/presets'
-import { restartGame } from './game/state'
+import { createInitialState, restartGame, type LaneDefinition } from './game/state'
 import { applyAction } from './game/turn'
 import { mapKeyboardEvent } from './input/keyboard'
 import { configureCanvas, renderGame } from './render/canvas'
+import { createLevelGeneratorController } from './level-generator/controller'
+import type { LevelGeneratorLifecycle, VerifiedLevelPreview } from './level-generator/lifecycle'
 
 const app = document.querySelector<HTMLElement>('#app')
 
@@ -39,6 +38,7 @@ app.innerHTML = `
           tabindex="0"
           aria-label="Rush Hour Crossing game board. Use arrow keys or W A S D to move, Space to wait, and R to restart."
         ></canvas>
+        <p id="generated-active" class="generated-active" hidden>Generated level active</p>
         <div id="difficulty-switch" class="difficulty-switch" role="group" aria-label="Traffic difficulty">
           ${DIFFICULTIES.map(
             (difficulty) =>
@@ -46,14 +46,6 @@ app.innerHTML = `
           ).join('')}
         </div>
       </div>
-      <section id="hint-panel" class="hint-panel" aria-label="Safe-path hint">
-        <button id="hint-toggle" class="hint-toggle" type="button">Hint</button>
-        <div class="hint-content">
-          <span class="hint-spinner" aria-hidden="true" hidden></span>
-          <p id="hint-status" class="hint-status" role="status" aria-live="polite" aria-label="Hint status"></p>
-          <ol id="hint-route" class="hint-route" aria-label="Verified route steps" hidden></ol>
-        </div>
-      </section>
     </div>
 
     <footer class="controls" aria-label="Controls">
@@ -62,17 +54,43 @@ app.innerHTML = `
       <span><kbd>R</kbd> restart</span>
       <span><kbd>Click</kbd> EASY / NORMAL / HARD traffic</span>
     </footer>
+
+    <section id="level-generator" class="level-generator" aria-labelledby="generator-title">
+      <h2 id="generator-title">Build a verified challenge</h2>
+      <p class="level-generator__intro">Choose a challenge rating from 1 to 5. The level is checked before you decide to play.</p>
+      <div class="level-generator__controls">
+        <label for="target-rating">Target challenge rating</label>
+        <select id="target-rating">
+          <option value="1">1 — Light</option><option value="2">2</option><option value="3" selected>3 — Balanced</option><option value="4">4</option><option value="5">5 — Tough</option>
+        </select>
+        <button id="generate-level" type="button">Generate level</button>
+        <button id="cancel-generation" type="button" hidden>Cancel</button>
+      </div>
+      <p id="generation-status" class="level-generator__status" role="status" aria-live="polite" aria-label="Level generation status"></p>
+      <div id="generated-preview" class="level-generator__preview" hidden>
+        <div>
+          <p class="level-generator__source">Five traffic lanes</p>
+          <canvas id="preview-canvas" aria-hidden="true"></canvas>
+        </div>
+        <div id="preview-metrics" class="level-generator__metrics"></div>
+        <button id="play-generated-level" type="button">Play this level</button>
+      </div>
+    </section>
   </main>
 `
 
 const canvas = requireElement<HTMLCanvasElement>('#game-canvas')
 const configAlert = requireElement<HTMLParagraphElement>('#config-alert')
 const adviceRegion = requireElement<HTMLParagraphElement>('#ai-advice')
-const hintButton = requireElement<HTMLButtonElement>('#hint-toggle')
-const hintPanel = requireElement<HTMLElement>('#hint-panel')
-const hintStatus = requireElement<HTMLParagraphElement>('#hint-status')
-const hintSpinner = requireElement<HTMLSpanElement>('.hint-spinner')
-const hintRouteList = requireElement<HTMLOListElement>('#hint-route')
+const ratingSelect = requireElement<HTMLSelectElement>('#target-rating')
+const generateButton = requireElement<HTMLButtonElement>('#generate-level')
+const cancelButton = requireElement<HTMLButtonElement>('#cancel-generation')
+const generationStatus = requireElement<HTMLParagraphElement>('#generation-status')
+const generatedPreview = requireElement<HTMLDivElement>('#generated-preview')
+const previewCanvas = requireElement<HTMLCanvasElement>('#preview-canvas')
+const previewMetrics = requireElement<HTMLDivElement>('#preview-metrics')
+const playGeneratedButton = requireElement<HTMLButtonElement>('#play-generated-level')
+const generatedActive = requireElement<HTMLParagraphElement>('#generated-active')
 const difficultyButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>('#difficulty-switch button[data-difficulty]'),
 )
@@ -80,10 +98,12 @@ const context = configureCanvas(canvas)
 const configResolution = resolveGameConfig(new URLSearchParams(window.location.search))
 let config = configResolution.config
 let lanes = DIFFICULTY_PRESETS[config.difficulty]
+let activeOrigin: 'preset' | 'generated' = 'preset'
 let usedFallback = configResolution.usedFallback
 let state = restartGame(config)
 const advice = createAdviceController(renderAdviceNotice)
-const hint = createHintController(() => render(false), () => createHintSnapshot(state, config))
+const generator = createLevelGeneratorController(renderGenerator)
+const previewContext = configureCanvas(previewCanvas)
 
 if (usedFallback) {
   configAlert.hidden = false
@@ -94,17 +114,32 @@ for (const button of difficultyButtons) {
   button.addEventListener('click', () => selectDifficulty(button.dataset.difficulty))
 }
 
-hintButton.addEventListener('click', () => {
-  const previousMode = hint.getState().mode
-  hint.activate(createHintSnapshot(state, config))
-  if (previousMode === 'visible' && hint.getState().mode === 'hidden') canvas.focus()
+generateButton.addEventListener('click', () => {
+  const targetDifficulty = Number(ratingSelect.value)
+  generator.generate({ targetDifficulty, lives: config.lives, crossingsToWin: config.crossingsToWin })
+})
+cancelButton.addEventListener('click', () => generator.cancel())
+playGeneratedButton.addEventListener('click', () => {
+  const selection = generator.play({ lives: config.lives, crossingsToWin: config.crossingsToWin })
+  if (!selection) return
+  advice.reset('generated')
+  activeOrigin = 'generated'
+  lanes = selection.lanes as LaneDefinition[]
+  config = { ...config, lives: selection.settings.lives, crossingsToWin: selection.settings.crossingsToWin }
+  state = restartGame(config)
+  render()
+  canvas.focus()
 })
 
 render()
 canvas.focus()
 
 window.addEventListener('keydown', (event) => {
-  if (event.target instanceof Element && event.target.closest('#difficulty-switch')) {
+  if (
+    event.target instanceof Element &&
+    (event.target.closest('#difficulty-switch, #level-generator') ||
+      event.target.closest('input, select, textarea, button, [contenteditable="true"]'))
+  ) {
     return
   }
 
@@ -114,20 +149,15 @@ window.addEventListener('keydown', (event) => {
   }
 
   event.preventDefault()
-  const hintMode = hint.getState().mode
-  if (hintMode === 'loading' || hintMode === 'visible') return
-
-  if (command === 'restart') {
-    hint.reset('restart')
-    advice.reset('restart')
-    state = restartGame(config)
+    if (command === 'restart') {
+      advice.reset('restart')
+      generator.invalidate()
+      state = restartGame(config)
   } else {
     const wasActive = state.status === 'active'
-    const previousLives = state.lives
     state = applyAction(state, command, lanes)
-    if (state.lives !== previousLives) hint.lifeChanged(state.lives)
     if (wasActive && state.status !== 'active') {
-      const summary = buildCompletedRunSummary(state)
+      const summary = buildCompletedRunSummary(state, activeOrigin)
       if (summary) advice.complete(summary)
     }
   }
@@ -135,13 +165,12 @@ window.addEventListener('keydown', (event) => {
 })
 
 function selectDifficulty(value: string | undefined): void {
-  const hintMode = hint.getState().mode
-  if (hintMode === 'loading' || hintMode === 'visible') return
   const difficulty = DIFFICULTIES.find((candidate) => candidate === value)
 
-  if (difficulty && difficulty !== config.difficulty) {
-    hint.reset('difficulty')
+  if (difficulty && (activeOrigin === 'generated' || difficulty !== config.difficulty)) {
     advice.reset('difficulty')
+    generator.invalidate()
+    activeOrigin = 'preset'
     config = { ...config, difficulty }
     lanes = DIFFICULTY_PRESETS[difficulty]
     state = restartGame(config)
@@ -155,62 +184,56 @@ function selectDifficulty(value: string | undefined): void {
   canvas.focus()
 }
 
-function render(animateTurn = true): void {
-  const hintState = hint.getState()
-  const routeSteps =
-    hintState.mode === 'visible' && hintState.notice?.kind === 'ready' && hintState.notice.response.outcome === 'verified'
-      ? hintState.notice.response.steps
-      : []
-  renderGame(context, state, config, lanes, routeSteps)
+function render(): void {
+  renderGame(context, state, config, lanes)
+  generatedActive.hidden = activeOrigin !== 'generated'
   for (const button of difficultyButtons) {
-    button.setAttribute('aria-pressed', String(button.dataset.difficulty === config.difficulty))
-    button.disabled = hintState.mode === 'loading' || hintState.mode === 'visible'
+    button.setAttribute('aria-pressed', String(activeOrigin === 'preset' && button.dataset.difficulty === config.difficulty))
   }
   const frame = canvas.closest<HTMLElement>('.board-frame')
   frame?.classList.remove('turn-flash')
-  if (animateTurn && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
     requestAnimationFrame(() => frame?.classList.add('turn-flash'))
   }
   canvas.setAttribute(
     'aria-label',
-    `Rush Hour Crossing. ${state.lives} lives, ${state.crossings} of ${config.crossingsToWin} crossings, score ${state.score}, tick ${state.tick}, status ${state.status}.${routeSteps.length > 0 ? ` Verified route overlay from tick ${hintState.notice?.kind === 'ready' ? hintState.notice.response.origin.tick : state.tick}.` : ''}`,
+    `Rush Hour Crossing. ${state.lives} lives, ${state.crossings} of ${config.crossingsToWin} crossings, score ${state.score}, tick ${state.tick}, status ${state.status}.`,
   )
-  renderHintState(hintState)
 }
 
-function renderHintState(hintState: ReturnType<typeof hint.getState>): void {
-  const paused = hintState.mode === 'loading' || hintState.mode === 'visible'
-  hintPanel.hidden = state.status !== 'active' && hintState.mode !== 'visible'
-  hintButton.hidden = state.status !== 'active' && hintState.mode !== 'visible'
-  hintButton.disabled = hintState.mode === 'loading' || (state.status !== 'active' && hintState.mode !== 'visible')
-  hintButton.textContent = hintState.mode === 'visible' ? 'Hide hint' : 'Hint'
-  hintButton.setAttribute('aria-pressed', String(hintState.mode === 'visible'))
-  hintButton.dataset.paused = String(paused)
-  hintSpinner.hidden = hintState.mode !== 'loading'
-  hintRouteList.replaceChildren()
+function renderGenerator(generatorState: LevelGeneratorLifecycle): void {
+  generationStatus.textContent = generatorState.status === 'running'
+    ? 'Generating and verifying your level…'
+    : generatorState.status === 'ready'
+      ? 'Verified level ready to preview. Choose Play this level when you are ready.'
+      : generatorState.message ?? ''
+  generateButton.disabled = generatorState.status === 'running'
+  cancelButton.hidden = generatorState.status !== 'running'
+  generatedPreview.hidden = generatorState.status !== 'ready' || !generatorState.preview
 
-  if (hintState.mode === 'loading') {
-    hintStatus.textContent = HINT_LOADING_MESSAGE
-    hintRouteList.hidden = true
-    return
-  }
-  if (hintState.mode !== 'visible' || !hintState.notice) {
-    hintStatus.textContent = ''
-    hintRouteList.hidden = true
-    return
-  }
+  const preview = generatorState.preview
+  if (!preview || generatorState.status !== 'ready') return
+  renderGame(previewContext, createInitialState({
+    lives: preview.settings.lives,
+    crossingsToWin: preview.settings.crossingsToWin,
+    difficulty: config.difficulty,
+  }), { lives: preview.settings.lives, crossingsToWin: preview.settings.crossingsToWin, difficulty: config.difficulty }, preview.lanes)
+  renderPreviewMetrics(preview)
+}
 
-  hintStatus.textContent = getHintMessage(hintState.notice, state.tick)
-  if (hintState.notice.kind === 'ready' && hintState.notice.response.outcome === 'verified') {
-    for (const [index, step] of hintState.notice.response.steps.entries()) {
-      const item = document.createElement('li')
-      item.textContent = describeHintRouteStep(step, index)
-      hintRouteList.append(item)
-    }
-    hintRouteList.hidden = false
-  } else {
-    hintRouteList.hidden = true
-  }
+function renderPreviewMetrics(preview: VerifiedLevelPreview): void {
+  const values = [
+    `Requested rating ${preview.requestedDifficulty}`,
+    `Measured rating ${preview.computedDifficulty}`,
+    `Minimum safe first crossing: ${preview.measurements.firstCrossingMinMoves} moves`,
+    `Minimum full win: ${preview.measurements.minMoves} moves`,
+    `Source: ${preview.source === 'generated' ? 'Generated and verified' : preview.source === 'last_verified' ? 'Previously verified level' : 'Verified template'}`,
+  ]
+  previewMetrics.replaceChildren(...values.map((value) => {
+    const item = document.createElement('p')
+    item.textContent = value
+    return item
+  }))
 }
 
 function renderAdviceNotice(notice: AdviceNotice | null): void {

@@ -75,7 +75,7 @@ export function settleAdviceJob(
 
 export function resetAdviceForNewRun(
   state: AdviceLifecycleState,
-  _reason: 'restart' | 'difficulty',
+  _reason: 'restart' | 'difficulty' | 'generated',
 ): AdviceLifecycleState {
   if (state.visibleNotice === null) return state
   return { ...state, visibleNotice: null }
