@@ -114,7 +114,7 @@ describe('POST /api/levels/generate', () => {
     expect(response.headers['access-control-allow-origin']).toBeUndefined()
     expect(JSON.parse(response.body)).toEqual(validPreview)
     expect(generate).toHaveBeenCalledTimes(1)
-    expect(generate).toHaveBeenCalledWith(generationRequest, expect.any(AbortSignal))
+    expect(generate).toHaveBeenCalledWith(generationRequest, expect.any(AbortSignal), expect.any(Function))
   })
 
   it.each([

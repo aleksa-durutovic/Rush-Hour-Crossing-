@@ -32,6 +32,7 @@ import {
 } from '../ai/failover-policy'
 import { ProviderConfigurationError } from '../ai/provider-config'
 import { createSolveLevelTool, replayProof, type SolveLevelTool, type SolveLevelProof } from './solve-tool'
+import type { TrackActiveWork } from '../security/active-work'
 
 export class InvalidGenerationRequestError extends Error {
   readonly code = 'INVALID_GENERATION_REQUEST'
@@ -43,7 +44,7 @@ export class InvalidGenerationRequestError extends Error {
 }
 
 export interface LevelGeneratorService {
-  generate(value: unknown, signal: AbortSignal): Promise<GenerationResponse>
+  generate(value: unknown, signal: AbortSignal, trackWork?: TrackActiveWork): Promise<GenerationResponse>
 }
 
 export interface LevelGeneratorServiceOptions {
@@ -114,7 +115,7 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
   const waitBeforeRetry = options.waitBeforeRetry ?? abortableDelay
 
   return {
-    async generate(value, callerSignal) {
+    async generate(value, callerSignal, trackWork) {
       const parsedRequest = generationRequestSchema.safeParse(value)
       if (!parsedRequest.success) throw new InvalidGenerationRequestError()
 
@@ -144,7 +145,7 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
       )
       run.status = 'running'
       const stopOperationally = async (reason: OperationalStopReason, status: 'stopped' | 'failed' = 'stopped') => {
-        const fallback = await makeOperationalFallback(run, solver, callerSignal, now, reason)
+        const fallback = await makeOperationalFallback(run, solver, callerSignal, now, reason, trackWork)
         if (callerSignal.aborted) {
           recordEvidence({
             event: 'operation_unavailable', role: run.providerRole,
@@ -211,7 +212,7 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
                 )
                 const model = role === 'primary' ? options.model : options.backupModel!
                 try {
-                  return await model.decide(context, attemptSignal, { timeoutMs })
+                  return await withActiveWork('provider', () => model.decide(context, attemptSignal, { timeoutMs }), trackWork)
                 } catch (error) {
                   throw toGeneratorProviderFailure(error)
                 }
@@ -251,7 +252,7 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
               { counters: run.counters, elapsedMs: now() - run.startTime, solverExecutions: run.solverExecutions },
               [...run.candidates.values()].map(record => ({ candidateId: record.candidateId, evaluationId: record.evaluationId, lanes: record.lanes })),
             )
-            rawDecision = await callModelWithTimeout(options.model, context, callerSignal, run, now)
+            rawDecision = await callModelWithTimeout(options.model, context, callerSignal, run, now, trackWork)
             decisionReady = true
             break
           } catch (error) {
@@ -317,18 +318,18 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
           run.solverExecutions += 1
           let toolOutput
           try {
-            toolOutput = await solver.execute({
+            toolOutput = await withActiveWork('solver', () => solver.execute({
               candidateId,
               evaluationId,
               lanes,
               settings,
               runDeadline: run.deadline,
               signal: callerSignal,
-            })
+          }), trackWork)
           } catch {
             if (callerSignal.aborted) return unavailable(run, 'cancelled', 'stopped', now)
             if (now() >= run.deadline || now() >= run.decisionCutoff) return stopOperationally('deadline')
-            const fallback = await makeOperationalFallback(run, solver, callerSignal, now, 'tool_failed')
+            const fallback = await makeOperationalFallback(run, solver, callerSignal, now, 'tool_failed', trackWork)
             if (fallback) return fallback
             if (callerSignal.aborted) return unavailable(run, 'cancelled', 'stopped', now)
             return unavailable(run, 'tool_failed', 'failed', now)
@@ -363,7 +364,7 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
           selected.evidence.outcome !== 'solved'
         ) return unavailable(run, 'invalid_final_selection', 'failed', now)
 
-        const verified = await verifyFinalSelection(run, selected, solver, callerSignal, now)
+        const verified = await verifyFinalSelection(run, selected, solver, callerSignal, now, trackWork)
         if ('kind' in verified) return verified
         const matches = verified.evidence.computedDifficulty === run.request.targetDifficulty
         const status = matches ? 'completed' : 'stopped'
@@ -402,6 +403,7 @@ async function verifyFinalSelection(
   solver: SolveLevelTool,
   signal: AbortSignal,
   now: () => number,
+  trackWork?: TrackActiveWork,
 ): Promise<{ evidence: Extract<CompactEvaluation, { outcome: 'solved' }> } | GenerationResponse> {
   if (signal.aborted) return unavailable(run, 'cancelled', 'stopped', now)
   if (now() >= run.deadline) return unavailable(run, 'deadline', 'stopped', now)
@@ -414,14 +416,14 @@ async function verifyFinalSelection(
   const evaluationId = `e${run.solverExecutions}`
   let output
   try {
-    output = await solver.execute({
+    output = await withActiveWork('solver', () => solver.execute({
       candidateId: selected.candidateId,
       evaluationId,
       lanes: selected.lanes,
       settings: selected.settings,
       runDeadline: run.deadline,
       signal,
-    })
+    }), trackWork)
   } catch {
     run.status = 'failed'
     return unavailable(run, 'final_verification_failed', 'failed', now)
@@ -447,6 +449,7 @@ async function callModelWithTimeout(
   callerSignal: AbortSignal,
   run: RunState,
   now: () => number,
+  trackWork?: TrackActiveWork,
 ): Promise<unknown> {
   const remainingMs = Math.max(0, Math.min(
     LEVEL_GENERATOR_POLICY.providerAttemptTimeoutMs,
@@ -471,7 +474,7 @@ async function callModelWithTimeout(
     else callerSignal.addEventListener('abort', onCallerAbort, { once: true })
   })
   try {
-    return await Promise.race([model.decide(context, signal, { timeoutMs: remainingMs }), timeout, aborted])
+    return await Promise.race([withActiveWork('provider', () => model.decide(context, signal, { timeoutMs: remainingMs }), trackWork), timeout, aborted])
   } finally {
     if (timer !== undefined) clearTimeout(timer)
     callerSignal.removeEventListener('abort', onCallerAbort)
@@ -485,6 +488,7 @@ async function makeOperationalFallback(
   signal: AbortSignal,
   now: () => number,
   stopReason: OperationalStopReason,
+  trackWork?: TrackActiveWork,
 ): Promise<GenerationResponse | null> {
   if (signal.aborted || now() >= run.deadline) return null
 
@@ -525,7 +529,7 @@ async function makeOperationalFallback(
 
   let output
   try {
-    output = await solver.execute({ candidateId, evaluationId, lanes, settings, runDeadline: run.deadline, signal })
+    output = await withActiveWork('solver', () => solver.execute({ candidateId, evaluationId, lanes, settings, runDeadline: run.deadline, signal }), trackWork)
   } catch {
     return null
   }
@@ -604,4 +608,8 @@ function unavailable(
 
 function elapsed(run: RunState, now: () => number): number {
   return Math.max(0, Math.min(LEVEL_GENERATOR_POLICY.runDeadlineMs, Math.floor(now() - run.startTime)))
+}
+
+function withActiveWork<T>(kind: 'provider' | 'solver', start: () => Promise<T>, trackWork?: TrackActiveWork): Promise<T> {
+  return trackWork ? trackWork(kind, start) : start()
 }

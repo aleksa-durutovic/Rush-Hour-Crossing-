@@ -4,6 +4,6 @@
     "lib": ["ES2022"],
     "types": ["node"]
   },
-  "include": ["server", "tests/server", "vite.config.ts"],
+  "include": ["server", "tests/server", "tests/security", "e2e/security.pw.ts", "playwright.security.config.ts", "vite.config.ts"],
   "exclude": []
 }

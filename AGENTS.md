@@ -19,7 +19,11 @@ Read this file before changing the project. It points to the authoritative sourc
 10. `specs/008-model-failover/` — user-approved bounded backup-model extension for both
     AI operations. Read `IMPLEMENTATION_GUIDE.md` first. Failover is disabled by default;
     the selected backup is Gemini 2.5 Flash (`gemini-2.5-flash`). No live provider call is authorized.
-11. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
+11. specs/009-secure-the-arcade/ - user-approved Week08 hardening and code-free
+    handoff. Read IMPLEMENTATION_GUIDE.md first. Continue on codex/ai-level-generator-feature;
+    preserve generator proof/Play, advice delay and failover budgets. Runtime hardening is implemented and verified; check docs/EVIDENCE_W08.md.
+    The measured dependency-audit blocker was repaired before functional work. No live calls.
+12. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
 
 When sources conflict, the higher item wins. Report the conflict; do not resolve it silently.
 
@@ -49,6 +53,8 @@ When sources conflict, the higher item wins. Report the conflict; do not resolve
 - Log meaningful AI involvement and decisions in `docs/AI_USAGE_LOG.md`.
 - Week 05 claim, signal, change, result and run evidence go in `docs/EVIDENCE_W05.md`.
   The feature 007 Windows boundary-test failure must be corrected before feature code.
+- Week08 claim, signal, change, result and runs go in docs/EVIDENCE_W08.md. The assignment requires each student to contribute one protection and one negative test; unknown individual contributions stay pending and must not be invented.
+  Follow feature009's unchanged T00-T17 expectations and baseline-first task order.
 - Never overwrite the baseline tag `s003-baseline-v1`.
 
 ## Checks before every commit

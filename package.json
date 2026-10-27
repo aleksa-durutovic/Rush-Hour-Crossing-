@@ -18,18 +18,21 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json",
     "preview": "vite preview",
     "test:e2e": "playwright test e2e/smoke.pw.ts e2e/advice.pw.ts e2e/level-generator.pw.ts",
-    "evidence:screenshots": "playwright test e2e/evidence.pw.ts"
+    "evidence:screenshots": "playwright test e2e/evidence.pw.ts",
+    "test:security:unit": "vitest run tests/security tests/server",
+    "test:security:browser": "playwright test -c playwright.security.config.ts",
+    "test:security": "npm run test:security:unit && npm run build && npm run test:security:browser"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.19.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.1"
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   }
 }

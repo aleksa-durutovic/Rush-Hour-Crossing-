@@ -89,6 +89,7 @@ const decisionEnvelopeSchema = z.object({ decision: modelDecisionSchema }).stric
 
 const GENERATOR_OUTPUT_LIMIT_BYTES = 8_192
 const GENERATOR_CONTEXT_LIMIT_BYTES = 24_576
+const ADVICE_OUTPUT_LIMIT_BYTES = 2_048
 
 export interface GeminiGeneratorModelOptions {
   apiKey?: string
@@ -141,6 +142,7 @@ export function createGeminiProvider(
         }
         const text = response.text
         if (typeof text !== 'string') return null
+        if (utf8ByteLength(text) > ADVICE_OUTPUT_LIMIT_BYTES) throw new ProviderFailure('output_limit')
         try {
           return JSON.parse(text) as unknown
         } catch {

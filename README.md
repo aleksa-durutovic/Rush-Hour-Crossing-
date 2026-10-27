@@ -50,3 +50,37 @@ at 15 seconds (primary 8 seconds, backup 7 seconds). Gemini models in one projec
 quota, so this does not guarantee recovery from project-wide quota exhaustion. Routine tests
 use fake transports; live verification still requires separate authorization. See
 `specs/008-model-failover/quickstart.md`.
+
+## Local score and advice trust
+
+Scores and completed-run summaries are local player data. The server treats submitted
+summaries as unverified input when preparing optional advice. Generated traffic is checked
+with the deterministic solver before preview; the current game changes only after the player
+chooses **Play this level**.
+
+## Week08 eight-minute security walkthrough
+
+Run the fake-backed suite from the approved generator branch checkout:
+
+    npm ci
+    npm run test:security
+
+The security unit suite uses the production handler, validators, provider adapters with
+injected fake transport, admission controller and real solver. The browser suite serves the
+production build through that handler at 127.0.0.1:4173. It makes no provider call and needs
+no credential. Each fixture creates fresh event/admission state; fake clocks replace real
+minute waits. Restarting the local server also resets the process-only event ring and
+admission window.
+
+| Time | Walkthrough |
+|---|---|
+| 0:00-1:00 | Open the game and identify local-only state, the generator boundary and the highest-priority resource risk. |
+| 1:00-2:30 | Run T00: two fake model decisions, the real solver, unchanged active board, verified preview, explicit Play and normal movement/reset. |
+| 2:30-5:00 | Run T02/T07/T13/T17: privilege and Origin denials, bounded admission, unknown tools and a foreign final reference. Show actual counters. |
+| 5:00-6:30 | Run T14/T21-T23: synthetic SDK key receipt, adapter/tool sentinels, newline injection and fixed-shape allow/deny/terminal events. |
+| 6:30-8:00 | Run T16 and the three before/after probes; review current audit status and the recorded residual limits. |
+
+For a normal local gameplay session, run **npm run dev**; no AI provider is needed for
+ordinary gameplay. The test suite owns its loopback fixtures and releases them after each
+case. See specs/009-secure-the-arcade/quickstart.md and docs/EVIDENCE_W08.md for the
+full reset steps, exact evidence and limitations.

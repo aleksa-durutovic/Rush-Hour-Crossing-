@@ -14,6 +14,7 @@ import {
   type ProviderRole,
 } from '../ai/failover-policy'
 import { ProviderConfigurationError } from '../ai/provider-config'
+import type { TrackActiveWork } from '../security/active-work'
 
 export const ADVICE_ATTEMPT_TIMEOUT_MS = 15_000
 const MAX_ATTEMPTS = 2
@@ -38,7 +39,7 @@ export interface AdviceServiceOptions {
 }
 
 export interface AdviceService {
-  analyze(summary: unknown, signal: AbortSignal): Promise<AdviceResponse>
+  analyze(summary: unknown, signal: AbortSignal, trackWork?: TrackActiveWork): Promise<AdviceResponse>
 }
 
 export class AdviceServiceError extends Error {
@@ -88,7 +89,7 @@ export function createAdviceService(provider: AdviceProvider, options: AdviceSer
   if (options.enabled && !options.backupProvider) throw new ProviderConfigurationError()
   const now = options.now ?? (() => performance.now())
   return {
-    async analyze(value, callerSignal) {
+    async analyze(value, callerSignal, trackWork) {
       if (!isCompletedRunSummary(value) || callerSignal.aborted) throw new AdviceServiceError()
 
       const summary = value
@@ -109,7 +110,7 @@ export function createAdviceService(provider: AdviceProvider, options: AdviceSer
             run: async (role, timeoutMs, attemptSignal) => {
               const active = role === 'primary' ? provider : options.backupProvider!
               try {
-                return await active.generateTip(input, attemptSignal, { timeoutMs })
+                return await startTrackedWork('provider', () => active.generateTip(input, attemptSignal, { timeoutMs }), trackWork)
               } catch (error) {
                 throw normalizeAdviceProviderFailure(error)
               }
@@ -131,7 +132,7 @@ export function createAdviceService(provider: AdviceProvider, options: AdviceSer
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
         if (callerSignal.aborted) throw new AdviceServiceError()
         try {
-          const output = await runAttempt(provider, input, callerSignal, ADVICE_ATTEMPT_TIMEOUT_MS)
+          const output = await runAttempt(provider, input, callerSignal, ADVICE_ATTEMPT_TIMEOUT_MS, trackWork)
           if (!isProviderTip(output)) throw new AdviceServiceError()
           const result: AdviceResponse = { focus, evidence, nextTip: output.nextTip }
           if (!isAdviceResponse(result)) throw new AdviceServiceError()
@@ -155,6 +156,7 @@ async function runAttempt(
   input: ProviderInput,
   callerSignal: AbortSignal,
   timeoutMs: number,
+  trackWork?: TrackActiveWork,
 ): Promise<unknown> {
   const controller = new AbortController()
   let timedOut = false
@@ -178,7 +180,8 @@ async function runAttempt(
   })
 
   try {
-    return await Promise.race([provider.generateTip(input, controller.signal, { timeoutMs }), timeout, callerAbort])
+    const providerWork = startTrackedWork('provider', () => provider.generateTip(input, controller.signal, { timeoutMs }), trackWork)
+    return await Promise.race([providerWork, timeout, callerAbort])
   } catch (error) {
     if (timedOut) throw new AttemptTimeoutError()
     throw error
@@ -214,4 +217,8 @@ function delay(milliseconds: number, signal: AbortSignal): Promise<void> {
     }, milliseconds)
     signal.addEventListener('abort', onAbort, { once: true })
   })
+}
+
+function startTrackedWork<T>(kind: 'provider' | 'solver', start: () => Promise<T>, trackWork?: TrackActiveWork): Promise<T> {
+  return trackWork ? trackWork(kind, start) : start()
 }

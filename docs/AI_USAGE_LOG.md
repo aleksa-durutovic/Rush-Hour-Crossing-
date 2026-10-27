@@ -166,3 +166,118 @@
 
 - **Exact backup profile selected**: The user specified Gemini 2.5 Flash (`gemini-2.5-flash`) for both features. Google's official model catalog and structured-output docs show the stable model ID and structured-output support; rate-limit documentation confirms project-level limits, so this profile does not promise quota independence. The current model documentation notes access restrictions for Gemini 2.5 users; account access is unverified. The existing `@google/genai` dependency is reused. No key was read and no live request was made.
 - **Implementation decision and result**: Reused `server/advice/gemini-provider.ts` as the sole Gemini SDK owner for primary and backup adapters. Added server-owned opt-in profile validation, bounded phase routing, clipped transport limits, cancellation/late-result protection and allowlisted per-operation evidence; kept the existing output contracts, generator solver/final proof, API DTOs and advice lifecycle. Fake providers/transports/clocks and the local solver were used. Required typechecks, 305 unit tests, build, audit, Chromium install and 29 browser tests passed; details and F01–F28 mapping are in `docs/EVIDENCE_008.md`. No live call, credential display, commit, push, merge or deployment occurred.
+
+## Week08 Secure the Arcade - planning and scope approval - 2026-10-27
+
+- **User request**: Read Week08 materials, check Spec Kit, agree a solution, then prepare
+  Markdown instructions for a cheaper model. User accepted generator-focused hardening,
+  shared browser/API protection and advice regressions, then asked to stay with the
+  existing AI generator branch. No optional challenge.
+- **Branch**: Clean codex/ai-level-generator-feature at06ff2534aa4e28abf65c3822d5f6695f3855103d,
+  containing committed007/008. The older similarly named branch has unresolved merges;
+  original dirty main was preserved. App attachment was denied because another chat owns
+  this checkout; explicit workdirs were used without changing branch ownership/attachment.
+- **Workflow**: Local speckit-specify/plan/tasks instructions, template resolution and
+  setup-plan/setup-tasks scripts produced feature009 spec/design/contracts/tasks/evals,
+  code-free IMPLEMENTATION_GUIDE and EVIDENCE_W08 skeleton. Local metadata selects009;
+  a Spec Kit feature label is not a Git branch switch. No extension hooks are registered.
+  Final handoff requires the read-only speckit-analyze prerequisite/consistency review.
+- **Research**: One read-only subagent, explicitly requested by speckit-plan, reviewed
+  admission/work lifetime, CSP/privacy and primary maintainer dependency patch sources.
+  No runtime implementation was delegated.
+- **Decisions**: Keep local-only/no accounts/database, solveLevel only, exact proof/Play,
+  delayed advice and failover budgets. Shared policy: one generation/one advice, two total,
+  five admitted AI jobs per rolling minute. Count draining underlying work, not just HTTP
+  promises. Fakes replace SDK/time, not application security controls.
+- **Actual checks**: Node24.14.0/npm11.12.1; typechecks passed;29 files/305 unit tests passed;
+  build passed;29 browser tests passed. Audit exited1 with4 vulnerabilities (2 moderate,
+  2 high). npm ci and Chromium installation were not rerun. Details/patch sources are
+  in EVIDENCE_W08 and feature009 research.
+- **Limits**: Targeted dependency repair is the first implementation prerequisite. No
+  runtime source/dependency edit or new T00-T17 execution occurred in planning; those
+  results remain NOT RUN. No live call, real key/.env inspection, commit/push/merge/deploy.
+  User approval is not recorded as student-pair review or invented individual contribution.
+
+## Week08 Secure the Arcade — implementation and verification — 2026-10-27
+
+- **Authorization and checkout**: The user approved all 34 Week08 tasks on codex/ai-level-generator-feature in C:/Users/AleksA/.codex/worktrees/feature-007-generator-publish/Rush hour crossing. HEAD stayed 06ff2534aa4e28abf65c3822d5f6695f3855103d. Existing user changes in AGENTS.md, README.md, docs/AI_USAGE_LOG.md, docs/CONTEXT_MANIFEST.md, docs/EVIDENCE_W08.md and specs/009 were preserved and updated only for the requested task. No commit, push, merge or deployment occurred.
+- **Workflow**: Read the code-free implementation guide and its complete source order, then used the local speckit-implement skill checklist. Reproduced the four-finding dependency audit before runtime work. Updated only the approved compatible Vite/Vitest/Zod ranges and lockfile; did not use audit fix --force.
+- **Security decisions**: Kept browser Origin absent-compatible for local clients and exact when supplied; fixed Vite to loopback port5173. Applied the enforcing CSP only to built/static responses, preserving API-only/dev behavior and existing headers. Admission checks capacity before the shared five-per-minute limit and counts real provider/solver promises through late settlement. Existing provider, solver, generator, advice-delay and failover budgets remain unchanged. The advice adapter checks 2,048 UTF-8 bytes before parsing, HTTP/browser consumption is bounded at 4,096 bytes, generator output remains bounded at 8,192 bytes, and compact evidence is schema-projected/measured under 4,096 bytes. Dynamic output keeps textContent; no sanitizer or rich-text renderer was added.
+- **Event/privacy choices**: Projected exactly eight fixed event fields with closed reason enums, UTC timestamp, safe server-owned correlation IDs, actual provider/solver counters, max32 events/job and process-local last128 ring. Sinks receive only the projection and cannot break service flow. Synthetic sentinel tests cover the injected SDK factory, adapter errors, tool names, contexts, HTTP, events and built assets. Newline-bearing tool names remain unknown and cannot create a forged event.
+- **Fixture/authority choices**: Security harness constructs the real handler, schemas, services, dispatch, admission and local solver with injected fake SDK transport and synthetic configuration. It never loads server environment, reads real credentials/.env, creates a real SDK client or performs live calls. Browser tests use production controls/build and verify advice delay, text rendering, verified preview and explicit Play. No production fake-provider mode or diagnostics route was added.
+- **Observed operational correction**: The patch helper once resolved to the original checkout despite the requested workdir and placed the bounded-output hunks there. Those exact hunks were removed after detection; existing local work was preserved. All later edits and checks used the explicit requested worktree. The older conflicted checkout was not used.
+- **Final checks**: npm ci installed85 packages/audited86 with0 vulnerabilities; typecheck passed; test:run passed38 files/382 tests; build passed119 modules; high-severity audit passed with0 findings; Chromium1243/headless shell were present; test:security passed23 files/249 unit/integration tests plus8/8 browser tests; test:e2e passed29 tests with GEMINI_API_KEY empty and AI_FAILOVER_ENABLED=false. One earlier security aggregate run exposed a T05 test synchronization race; the fixture now waits for the first delayed advice response and the final aggregate passed.
+- **Assignment integrity**: The assignment requires each student to contribute one protection and one negative test. No individual contribution was supplied or observed; names and contributions remain pending and are not invented. No live quota was used.
+
+
+## Follow-up live Gemini API smoke test — 2026-10-27
+
+- **Authorization**: The user selected the real Gemini API option and acknowledged that it may use quota.
+- **Execution**: Started the actual local application/API on loopback port 18787 with failover set to false. Sent one synthetic valid completed-run summary to `POST /api/advice` with the exact allowed Origin.
+- **Result**: HTTP 503 `ADVICE_UNAVAILABLE`. The fixed security-event projection recorded one provider attempt and terminal reason `PROVIDER_UNAVAILABLE`; it does not reveal whether an outbound Gemini request reached the provider. No successful live response is claimed.
+- **Scope decision**: Did not send the generator request after the advice provider path failed, avoiding further quota while availability was unclear. The server was stopped. No credential values or `.env` contents were inspected or printed; no backup attempt or live failover was used.
+
+- **Cause diagnosis**: The user asked why the live smoke test was unverified. One bounded follow-up request used the same real handler/service and primary Gemini adapter with failover disabled, adding a temporary wrapper that logged only safe category and transport status/count. It returned `ADVICE_UNAVAILABLE` with `provider_failure_category=configuration` and `transport_attempts=0`. The adapter source rejects an absent/empty API key before SDK construction, and the installed SDK uses global fetch for HTTP. Therefore the worktree server process had no usable `GEMINI_API_KEY`; no outbound Gemini HTTP request occurred. This is runtime configuration, not an observed provider rejection.
+- **Cleanup and limit**: Removed the temporary diagnostic source and stopped the server. No generation call was made. No credential value, request URL/body, provider response body or `.env` content was inspected or printed. A live success can be retested after the user configures the key privately for this worktree's server process.
+
+
+## Retry after user reported key setup - 2026-10-27
+
+- **Execution**: Restarted the actual server on loopback with failover disabled and sent one synthetic advice request. It again returned `ADVICE_UNAVAILABLE`. Checked only for `.env` file presence in the selected worktree root; result was absent. No file contents were read.
+- **Diagnosis**: A sanitized request using the real handler/service/provider again reported category `configuration`, with zero SDK transport calls. The key still does not reach this worktree's server process, so Gemini was not contacted. Likely the `.env` was created in a different checkout/path; the server reads `.env` relative to its working directory.
+- **Cleanup**: No generation request was sent. Stopped the server and removed the temporary wrapper. Credential values and `.env` contents remain uninspected.
+
+
+## Successful live API retry - 2026-10-27
+
+- **Configuration check**: `.env` now exists at the selected worktree root; only file presence was checked, and Git confirms `.env` is ignored. No contents were read.
+- **Live API results**: With failover disabled, advice returned HTTP 200 with schema-valid output (focus `general`, nextTip length 138; text not printed). Generation returned a completed generated preview with `verified=true` and matching difficulty. The real solver reported 6 first-crossing moves, 69 explored states and 226 action evaluations; server counters showed 3 provider attempts and 3 solver calls.
+- **Transient result**: The first normal advice retry returned 503 after two provider attempts, but a subsequent sanitized request returned provider HTTP 200 and a valid tip; a later normal advice request also returned HTTP 200. The cause of that individual earlier 503 was not exposed.
+- **Boundaries**: All inputs were synthetic. No failover or UI Play action was used. The preview remains unplayed pending the application's explicit Play control. Stopped the server and removed the temporary wrapper; never inspected or printed credentials or `.env` contents.
+
+## Week08 independent implementation review - 2026-10-27
+
+- User requested a review, fresh tests and comparison with the accepted implementation plan.
+- Codex used the code-review skill and read the actual implementation, contracts, tests and
+  evidence on codex/ai-level-generator-feature. No runtime implementation was delegated.
+- Fresh clean install, both typechecks,382 unit tests, production build, zero-vulnerability
+  audit,249 security/server unit tests,8 security browser tests and29 existing browser
+  tests passed. Detailed results are in EVIDENCE_W08 section14.
+- One fake-backed production-handler probe confirmed incomplete fallback previews are
+  incorrectly logged as completed generation. Review also found the required independent
+  cumulative-deadline test missing despite T12/T019 being marked complete.
+- Runtime source/tests were preserved; only this log and the existing evidence record were
+  appended with review results. No real key/.env content was inspected, no new live
+  provider call was made, and no commit/push/merge/deployment occurred.
+
+## Week08 review corrections - 2026-10-27
+
+- User authorized correcting the two implementation-review findings. Codex used the
+  existing speckit-implement workflow on codex/ai-level-generator-feature; all13 checklist
+  entries passed, local prerequisites selected009, and no extension hooks were registered.
+- Wrote three actual-HTTP fallback-event regressions before source changes. They failed
+ 3/7 with the observed completed/COMPLETED bug. One guard change in server/app.ts made the
+  same7 tests pass while retaining verified previews, counters and original stop reasons.
+- Added six cumulative timing/final-verification/late-proof cases for disabled/enabled
+  failover. New assertions/eval expectations preceded their first run. Each provider
+  attempt stays below its clipped timeout; real solver work crosses the40s decision
+  cutoff or completes inside the modeled42s bound. An explicitly late final-tool proof
+  at45s is rejected. No production timing limit or service/solver logic was changed.
+- Fresh clean install, both typechecks,391 unit tests,production build,zero-vulnerability
+  audit,258 security/server unit tests,8 security browser tests and29 existing browser
+  tests passed. Actual claim/signal/change/result is in EVIDENCE_W08 Section15.
+- No subagents, real-key/.env inspection, live provider call, commit,push,merge or deployment.
+  Pre-existing user changes and other worktrees were preserved.
+
+## Week08 GitHub publication authorization - 2026-10-27
+
+- User requested committing the completed feature on GitHub, authorizing commit and push
+  on the existing codex/ai-level-generator-feature branch. No main merge/deploy requested.
+- Codex repeated all pre-commit gates: clean install,typechecks,391 unit tests,production
+  build,zero-vulnerability audit,258 security/server unit tests,8 security browser tests
+  and29 existing browser tests passed.
+- Staged48 scoped feature files and scanned staged blobs for credential patterns without
+  reading ignored environment files. No matches; builds,reports and environment files
+  excluded. Fetched upstream matched the local branch before commit.
+- Publication uses a Conventional Commit and normal push, with no force/history rewrite,
+  live provider call or changes to the separate original/conflicted worktrees.

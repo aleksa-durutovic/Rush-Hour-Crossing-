@@ -98,6 +98,8 @@ export function isAdviceError(value: unknown): value is { error: string } {
     value.error === 'REQUEST_TOO_LARGE' ||
     value.error === 'UNSUPPORTED_MEDIA_TYPE' ||
     value.error === 'ADVICE_UNAVAILABLE' ||
+    value.error === 'ADVICE_BUSY' ||
+    value.error === 'AI_RATE_LIMITED' ||
     value.error === 'INTERNAL_ERROR'
   )
 }

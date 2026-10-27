@@ -50,3 +50,31 @@ user selected Gemini 2.5 Flash (`gemini-2.5-flash`) for both operations. No live
 call is authorized.
 Credentials and raw provider payloads are never needed in implementation context or evidence.
 Routine validation uses fakes only; live calls require fresh explicit authorization.
+
+## Week08 context extension - 2026-10-27
+
+User-approved generator-focused hardening includes shared HTTP/browser protection and
+advice regressions, continuing on codex/ai-level-generator-feature. No optional challenge.
+The root authority order remains in force; feature009 does not override game/AI budgets.
+
+| Source | Included | Purpose and boundary |
+|---|---|---|
+| specs/009-secure-the-arcade/ | Yes | Approved I1-I8/T00-T17, contracts, code-free guide and implementation tasks with verification status |
+| docs/EVIDENCE_W08.md | Yes | Actual baseline, repaired dependency audit and Week08 implementation/test evidence |
+| Week08 Desktop ZIP | Read in planning | Lesson/assignment/template; path/hash in feature009 research; not runtime model context |
+| Accepted006/007/008 and generator-branch source/tests | Yes | Preserve real proof/Play, advice delay and failover |
+| Primary references in feature009 research | Minimal | Security decisions, targeted dependency-patch evidence and final audit result |
+| Conflicted older generator and dirty original main | No implementation base | Preserve separately; no reset/stash/copy over selected branch |
+| Real environment values/.env/credentials/raw provider payloads | No | Fake transport and synthetic config only |
+
+Local Spec Kit metadata selects009; Git stays on the existing generator branch.
+Course documents/evidence are developer context, never wholesale runtime model context.
+Feature009 implementation is recorded in docs/EVIDENCE_W08.md on the approved generator branch. Fake transport and synthetic config were used; no live provider call was made.
+
+Follow-up live-provider diagnosis: the local advice endpoint returned ADVICE_UNAVAILABLE; a sanitized diagnostic found configuration failure with zero SDK transport attempts. No usable GEMINI_API_KEY reached the selected worktree process. No credential or .env value was inspected. See Evidence Sections 10-11; configure the key privately before any retry.
+
+
+Retry after reported setup still found no `.env` at the selected worktree root (presence only) and zero SDK transport attempts; place `GEMINI_API_KEY` in this worktree's root `.env` or set it privately in the server process environment before retrying. No key was exposed.
+
+
+Live smoke test update (2026-10-27): `.env` is now present at the selected worktree root (presence only; contents not read). Live advice and generation API requests succeeded; generation's real solver verification passed. Failover stayed disabled and no Play action was triggered. Full results and the earlier transient 503 are in Evidence Section 13.

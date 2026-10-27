@@ -6,12 +6,18 @@ import { createGeminiBackupAdapters, createGeminiGeneratorModel, createGeminiPro
 import { createAdviceService } from './advice/service'
 import { createLevelGeneratorService } from './level-generator/service'
 import { loadServerEnvironment } from './environment'
-import { allowedHostsFor, readServerConfig } from './config'
+import { allowedHostsFor, allowedOriginsFor, readServerConfig } from './config'
 import { createProviderSet, GEMINI_BACKUP_PROFILE, readProviderConfig } from './ai/provider-config'
 import type { FailoverEvidenceEvent } from './ai/failover-policy'
+import { createAdmissionController } from './security/admission'
+import { createSecurityEventStore, type SecurityEvent } from './security/events'
 
 function writeFailoverEvidence(event: FailoverEvidenceEvent): void {
   console.info(`AI failover ${JSON.stringify(event)}`)
+}
+
+function writeSecurityEvent(event: SecurityEvent): void {
+  console.info(`Security event ${JSON.stringify(event)}`)
 }
 
 function main(): void {
@@ -32,13 +38,21 @@ function main(): void {
     onEvidence: writeFailoverEvidence,
   })
   const staticDir = process.argv.includes('--serve-dist') ? resolve('dist') : undefined
+  const admissionController = createAdmissionController()
+  const securityEvents = createSecurityEventStore({ onEvent: writeSecurityEvent })
 
   if (staticDir && !existsSync(join(staticDir, 'index.html'))) {
     throw new Error('dist/index.html was not found. Run "npm run build" first.')
   }
 
   const server = createServer(createRequestHandler({
-    allowedHosts: allowedHostsFor(config.port), staticDir, adviceService, generationService,
+    allowedHosts: allowedHostsFor(config.port),
+    allowedOrigins: allowedOriginsFor(config.port, !staticDir),
+    admissionController,
+    securityEvents,
+    staticDir,
+    adviceService,
+    generationService,
   }))
 
   server.on('error', (error) => {
