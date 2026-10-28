@@ -281,3 +281,123 @@
   excluded. Fetched upstream matched the local branch before commit.
 - Publication uses a Conventional Commit and normal push, with no force/history rewrite,
   live provider call or changes to the separate original/conflicted worktrees.
+
+## Week08 report verification rerun - 2026-10-27
+
+- User requested fresh tests and accurate result updates in Aleksa's and Igor's draft
+  weekly reports. Codex ran checks on feature branch HEAD779cd39 without runtime changes.
+- npm ci, both TypeScript checks,391 unit tests,zero-vulnerability audit,production build,
+  the258-test security/server subset,8 security browser tests and29 existing browser tests
+  all passed. The report drafts now label these as fresh Codex-run results, with the258
+  subset explicitly distinguished from the391 total.
+- Browser security tests used existing fakes and the real solver. Existing browser
+  regressions inherited explicitly empty GEMINI_API_KEY and disabled failover from a
+  Node spawn wrapper. No secret-file inspection or live provider call occurred.
+- Recorded actual results in EVIDENCE_W08 Section17. No student authorship, learning or
+  personal execution was inferred from these runs. Reports remain drafts; no commit,
+  push, merge, deployment or changes to other worktrees were made.
+
+## Feature010 security-fix planning - 2026-10-28
+
+- User requested plans only for a cumulative shared provider-attempt allowance and bounded
+  streamed generation responses, plus a separate manual Gemini account-control checklist.
+  Application/test implementation, commit, push, merge, deploy and live calls are prohibited.
+- Codex inspected the explicit generator worktree/branch, HEAD779cd397b4797a551607c69169f96d88b586e835,
+  local refs and live read-only remote refs. Target has not advanced from the reviewed SHA.
+  Original dirty main was not used as a baseline; prior edits in this log/evidence remain.
+- Used local Spec Kit specify -> plan -> tasks, selecting new010 after scanning001-009.
+  Local ignored feature metadata changes to010; Git stays codex/ai-level-generator-feature.
+  The plan skill explicitly dispatched one research agent for official Google controls;
+  Codex checked the linked official pages and consolidated the manual checklist.
+- Proposed60 cumulative attempts per serving process; owner approval still pending.
+  Process-restart reset is explicit and pending owner acceptance; no dollar-cap claim.
+  Proposed start-gate design aligns actual counters/events before classifying denial;
+  browser fix stays local to generator client. No runtime or test source was changed.
+- Fresh checks passed: npm ci, both typechecks,391 unit tests, build,0-vulnerability audit,
+  security subset258 units plus8 browser cases, and29 existing browser cases. One e2e
+  invocation failed startup while security occupied4173; serial rerun passed. No new010
+  regression/eval was executed. Chromium was already available; install was not rerun.
+- Created specs/010-ai-resource-bounds with specification, plan,20 unchecked future tasks,
+  fixed regression expectations, handoff, contracts, research, baseline and manual account
+  checklist. Account state remains unverified. Document/link/task checks and git diff
+  --check passed. Read-only Spec Kit analysis follows task generation in this session.
+- No credential/.env content inspection, provider call, account-setting change or publication.
+  Existing warnings were informational. Student authorship/contributions are not inferred.
+
+## Feature010 owner policy approval - 2026-10-28
+
+- Owner response: "1. 60 attempts per server process 2. accepted 3. approved".
+- Recorded P1=60 cumulative attempts shared by generation/advice per serving process;
+  P2=restart/watch restart/crash reset with independent allowances in other processes;
+  P3=existing busy/rate precedence, safe unavailability, verified generator fallback and
+  delayed advice behavior. Browser reload never refills the process allowance.
+- Updated the010 planning package consistently and qualified initial503 acceptance as
+  applying to otherwise admissible requests. Corrected quickstart's pre-change probe
+  reference to B00, matching tasks/handoff; small-limit B01 follows budget API support.
+- Policy approval does not start implementation. All20 future tasks remain unchecked;
+  new regression expectations remain NOT RUN and Google account facts unverified.
+- Documentation/evidence only; no runtime/test/dependency changes, provider call,
+  credential inspection, account setting, commit/push/merge/deploy or branch change.
+  The initial baseline observations remain historical, not newly executed checks.
+
+## Feature010 local implementation and verification - 2026-10-28
+
+- The owner explicitly authorized only the cumulative provider-start allowance and bounded
+  generator response reader on the existing feature branch. I rechecked HEAD, remote refs
+  and dirty status, preserved the uncommitted010 documents and existing evidence/log edits,
+  and kept the original project directory out of the implementation baseline.
+- Followed the local `speckit-implement` task order after selecting010 in local metadata.
+  Established a fresh fake-only baseline, then wrote and ran B00/S03 before runtime edits:
+  B00 measured63 starts against the approved60 and S03 consumed131,072 bytes.
+- Implemented one immutable shared process budget at the provider lease boundary and a
+  private bounded generator stream reader. The principal decisions were to keep charging
+  tied to the actual invocation thunk, align counters/events inside that authorized thunk,
+  leave solver starts independent, preserve exhaustion as a non-provider error, and avoid
+  awaiting stream cancellation acknowledgements.
+- Added synthetic small-limit HTTP/service/phase tests and controlled browser-stream tests.
+  A final gate found an enabled-backup timeout calculation could produce
+  7,000.000000000001ms; rounded the remaining timeout down to whole milliseconds so it
+  cannot exceed the documented cap. No provider/profile/dependency or account setting was
+  changed.
+- Final measured results are in `docs/EVIDENCE_W08.md` Section20:421 unit tests,274 security
+  tests,9 security browser tests,30 regular browser tests, typechecks/build/audit all passed.
+  Browser suites ran serially; test-launching environments had an explicitly empty real key
+  and disabled failover. No live provider call, credential inspection, account-setting
+  change, commit, push, merge or deployment occurred. Google M1-M7 remain unverified.
+
+## Week08 report review of the latest fixes - 2026-10-28
+
+- The user requested verification of the latest fixes and clarified the existing Desktop
+  Week08 report as the destination. Codex used code-review and student-weekly-report
+  instructions, inspected the explicit generator worktree and Feature010 contract/diff,
+  and reran the existing offline checks. No application or test behavior was changed.
+- Review confirmed the two narrow runtime fixes against the actual suites: shared
+  60-start process allowance and bounded16,384-byte retained generator response.
+  The first unit run failed420/421 because an advice backup test requires exactly7,000ms
+  with a real clock, while the policy supplied6,999ms. The focused19-test and unchanged
+  full421-test reruns passed; this remains a test-stability finding, not a resolved defect.
+- Clean install, both typechecks, build, zero-finding audit,274 security/server unit tests,
+  9 security browser tests and30 ordinary browser tests passed. Exact outcomes and limits
+  are appended in EVIDENCE_W08 Section21. Browser suites ran serially with explicit empty
+  provider credentials in child environments and disabled failover; no live calls.
+- Updated only report/evidence/AI-use prose. The report remains NACRT and retains the
+  learner's supplied personal contribution; no new human authorship/manual verification
+  was invented. Manual account review and publication/main delivery remain pending.
+  No credentials read, account changes, commits, pushes, merges or deployments.
+
+## Authorized publication of the resource fixes - 2026-10-28
+
+- The user explicitly authorized pushing the latest fixes to GitHub. Codex fetched origin
+  and confirmed the existing feature branch matched remote779cd397 before publication.
+  The original main checkout and all unrelated work were preserved.
+- Used the debugging workflow for the previously observed timing-sensitive assertion:
+  injected the existing constant-clock seam into one advice-service test while retaining
+  its exact timeout assertion and all production code/limits. Focused32 tests passed.
+- Fresh pre-commit install, typechecks,421 unit tests, build, zero-finding audit,274
+  security/server tests,9 security browsers and30 ordinary browsers passed. Section22
+  of EVIDENCE_W08 records the actual outputs and offline execution boundaries.
+- Publication scope is one normal commit and push of the reviewed Feature010 code,
+  tests, specifications and evidence to codex/ai-level-generator-feature. The Desktop
+  report stays outside Git and will receive the actual publication reference afterward.
+  No main merge, deployment, live provider call, credential inspection or account change
+  is authorized by this request; manual account checks remain pending.

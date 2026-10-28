@@ -1,3 +1,5 @@
+import { ProviderAttemptBudgetExhaustedError } from '../security/provider-attempt-budget'
+
 export const AI_FAILOVER_POLICY = {
   primaryTimeoutMs: 8_000,
   backupTimeoutMs: 7_000,
@@ -78,7 +80,7 @@ export interface EnabledProviderPhaseOptions<T> {
   startingRole?: ProviderRole
   outerDeadline?: number
   now?: () => number
-  run: (role: ProviderRole, timeoutMs: number, signal: AbortSignal) => Promise<T> | T
+  run: (role: ProviderRole, timeoutMs: number, signal: AbortSignal, onStarted: () => void, attemptNumber: number) => Promise<T> | T
   onAttemptStart: (role: ProviderRole, attemptNumber: number, deadline: number) => void
   onEvidence?: (event: Omit<FailoverEvidenceEvent, 'operation' | 'elapsedMs' | 'providerAttemptCount'>) => void
   wait?: (milliseconds: number, signal: AbortSignal) => Promise<void>
@@ -109,31 +111,40 @@ export async function runEnabledProviderPhase<T>(options: EnabledProviderPhaseOp
       ? AI_FAILOVER_POLICY.primaryTimeoutMs
       : AI_FAILOVER_POLICY.backupTimeoutMs
     const deadline = Math.min(attemptStartedAt + allowance, phaseDeadline, options.outerDeadline ?? Infinity)
-    const timeoutMs = deadline - attemptStartedAt
+    const timeoutMs = Math.floor(deadline - attemptStartedAt)
     if (timeoutMs <= 0) {
       options.onEvidence?.({ event: 'phase_stopped', role, attempt: attempts, category: 'timeout' })
       throw new ProviderFailure('timeout')
     }
 
-    attempts += 1
-    options.onAttemptStart(role, attempts, deadline)
-    options.onEvidence?.({ event: 'attempt_started', role, attempt: attempts })
-    if (initialRole === 'primary' && role === 'backup') {
-      options.onEvidence?.({ event: 'role_switched', role, attempt: attempts })
+    const attemptNumber = attempts + 1
+    let started = false
+    const onStarted = (): void => {
+      if (started) return
+      started = true
+      attempts += 1
+      options.onAttemptStart(role, attemptNumber, deadline)
+      options.onEvidence?.({ event: 'attempt_started', role, attempt: attemptNumber })
+      if (initialRole === 'primary' && role === 'backup') {
+        options.onEvidence?.({ event: 'role_switched', role, attempt: attemptNumber })
+      }
     }
     try {
-      const result = await runOneAttempt(options, role, deadline, timeoutMs, now)
+      const result = await runOneAttempt(options, role, deadline, timeoutMs, now, onStarted, attemptNumber)
+      if (!started) throw new ProviderFailure('permanent')
       if (options.signal.aborted) throw new ProviderFailure('cancelled')
       if (now() >= deadline) throw new ProviderFailure('timeout')
-      options.onEvidence?.({ event: 'phase_completed', role, attempt: attempts })
+      options.onEvidence?.({ event: 'phase_completed', role, attempt: attemptNumber })
       return result
     } catch (caught) {
+      if (caught instanceof ProviderAttemptBudgetExhaustedError) throw caught
       const failure = options.signal.aborted
         ? new ProviderFailure('cancelled')
         : normalizeFailure(caught)
-      options.onEvidence?.({ event: 'attempt_failed', role, attempt: attempts, category: failure.category })
+      if (started) options.onEvidence?.({ event: 'attempt_failed', role, attempt: attemptNumber, category: failure.category })
+      if (!started) throw failure
       if (!FAILOVER_ELIGIBLE.has(failure.category) || attempts >= 2 || now() >= phaseDeadline) {
-        options.onEvidence?.({ event: 'phase_stopped', role, attempt: attempts, category: failure.category })
+        options.onEvidence?.({ event: 'phase_stopped', role, attempt: attemptNumber, category: failure.category })
         throw failure
       }
 
@@ -145,13 +156,13 @@ export async function runEnabledProviderPhase<T>(options: EnabledProviderPhaseOp
         if (remainingMs <= delayMs) {
           if (remainingMs > 0) await (options.wait ?? abortableDelay)(remainingMs, options.signal)
           const category = options.signal.aborted ? 'cancelled' : 'timeout'
-          options.onEvidence?.({ event: 'phase_stopped', role, attempt: attempts, category })
+          options.onEvidence?.({ event: 'phase_stopped', role, attempt: attemptNumber, category })
           throw new ProviderFailure(category)
         }
         await (options.wait ?? abortableDelay)(delayMs, options.signal)
         if (options.signal.aborted) throw new ProviderFailure('cancelled')
         if (now() >= phaseDeadline) {
-          options.onEvidence?.({ event: 'phase_stopped', role, attempt: attempts, category: 'timeout' })
+          options.onEvidence?.({ event: 'phase_stopped', role, attempt: attemptNumber, category: 'timeout' })
           throw new ProviderFailure('timeout')
         }
       }
@@ -167,6 +178,8 @@ async function runOneAttempt<T>(
   deadline: number,
   timeoutMs: number,
   now: () => number,
+  onStarted: () => void,
+  attemptNumber: number,
 ): Promise<T> {
   const attemptController = new AbortController()
   const signal = AbortSignal.any([options.signal, attemptController.signal])
@@ -193,7 +206,10 @@ async function runOneAttempt<T>(
 
   try {
     const result = await Promise.race([
-      Promise.resolve().then(() => options.run(role, timeoutMs, signal)),
+      Promise.resolve().then(() => {
+        if (signal.aborted) throw new ProviderFailure('cancelled')
+        return options.run(role, timeoutMs, signal, onStarted, attemptNumber)
+      }),
       timeout,
       callerAbort,
     ])
@@ -201,6 +217,7 @@ async function runOneAttempt<T>(
     if (now() >= deadline) throw new ProviderFailure('timeout')
     return result
   } catch (error) {
+    if (error instanceof ProviderAttemptBudgetExhaustedError) throw error
     if (options.signal.aborted) throw new ProviderFailure('cancelled')
     if (timedOut || now() >= deadline) throw new ProviderFailure('timeout')
     throw normalizeFailure(error)

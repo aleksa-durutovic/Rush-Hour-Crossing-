@@ -40,7 +40,8 @@ describe('enabled provider phase policy', () => {
     await expect(runEnabledProviderPhase({
       signal: new AbortController().signal,
       now: () => 0,
-      run: async (role, timeoutMs) => {
+      run: async (role, timeoutMs, _signal, onStarted) => {
+        onStarted()
         calls.push({ role, timeoutMs })
         if (role === 'primary') throw new ProviderFailure('rate_limit')
         return 'verified'
@@ -65,7 +66,8 @@ describe('enabled provider phase policy', () => {
     const result = runEnabledProviderPhase({
       signal: new AbortController().signal,
       now: () => Date.now(),
-      run: (role, timeoutMs, signal) => {
+      run: (role, timeoutMs, signal, onStarted) => {
+        onStarted()
         seen.push({ role, timeoutMs, signal })
         if (role === 'primary') {
           primarySignal = signal
@@ -90,7 +92,8 @@ describe('enabled provider phase policy', () => {
     const result = runEnabledProviderPhase({
       signal: new AbortController().signal,
       now: () => Date.now(),
-      run: (role, timeoutMs, signal) => {
+      run: (role, timeoutMs, signal, onStarted) => {
+        onStarted()
         attempts.push({ role, timeoutMs, signal })
         return new Promise<never>(() => undefined)
       },
@@ -115,7 +118,8 @@ describe('enabled provider phase policy', () => {
       startingRole: 'backup',
       signal: new AbortController().signal,
       now: () => now,
-      run: async (_role, timeoutMs) => {
+      run: async (_role, timeoutMs, _signal, onStarted) => {
+        onStarted()
         roles.push('backup')
         timeouts.push(timeoutMs)
         if (roles.length === 1) throw new ProviderFailure('temporary_unavailable')
@@ -137,7 +141,8 @@ describe('enabled provider phase policy', () => {
     await expect(runEnabledProviderPhase({
       signal: controller.signal,
       now: () => 0,
-      run: async role => {
+      run: async (role, _timeoutMs, _signal, onStarted) => {
+        onStarted()
         roles.push(role)
         controller.abort()
         throw new ProviderFailure('rate_limit')
@@ -145,6 +150,28 @@ describe('enabled provider phase policy', () => {
       onAttemptStart: () => undefined,
     })).rejects.toMatchObject({ category: 'cancelled' })
     expect(roles).toEqual(['primary'])
+  })
+
+  it('spends no allowance or emits a start when cancelled before the invocation microtask', async () => {
+    const controller = new AbortController()
+    const run = vi.fn(async () => 'not-started')
+    const onAttemptStart = vi.fn()
+    const events: FailoverEvidenceEvent[] = []
+    const pending = runEnabledProviderPhase({
+      signal: controller.signal,
+      now: () => 0,
+      run: (_role, _timeoutMs, _signal, onStarted) => {
+        onStarted()
+        return run()
+      },
+      onAttemptStart,
+      onEvidence: event => events.push({ ...event, operation: 'advice', elapsedMs: 0, providerAttemptCount: 0 }),
+    })
+    controller.abort()
+    await expect(pending).rejects.toMatchObject({ category: 'cancelled' })
+    expect(run).not.toHaveBeenCalled()
+    expect(onAttemptStart).not.toHaveBeenCalled()
+    expect(events.some(event => event.event === 'attempt_started' || event.event === 'role_switched')).toBe(false)
   })
 
   it('aborts active backup work and ignores its late settlement when cancelled', async () => {
@@ -157,7 +184,8 @@ describe('enabled provider phase policy', () => {
     const pending = runEnabledProviderPhase({
       signal: controller.signal,
       now: () => 0,
-      run: (role, _timeoutMs, signal) => {
+      run: (role, _timeoutMs, signal, onStarted) => {
+        onStarted()
         roles.push(role)
         if (role === 'primary') throw new ProviderFailure('rate_limit')
         backupSignal = signal
@@ -182,7 +210,8 @@ describe('enabled provider phase policy', () => {
       startingRole: 'backup',
       signal: controller.signal,
       now: () => 0,
-      run: async role => {
+      run: async (role, _timeoutMs, _signal, onStarted) => {
+        onStarted()
         roles.push(role)
         throw new ProviderFailure('temporary_unavailable')
       },
@@ -198,7 +227,8 @@ describe('enabled provider phase policy', () => {
       await expect(runEnabledProviderPhase({
         signal: new AbortController().signal,
         now: () => 0,
-        run: async role => {
+        run: async (role, _timeoutMs, _signal, onStarted) => {
+          onStarted()
           roles.push(role)
           throw new ProviderFailure(category)
         },
@@ -214,7 +244,8 @@ describe('enabled provider phase policy', () => {
     const result = runEnabledProviderPhase({
       signal: new AbortController().signal,
       now: () => Date.now(),
-      run: async role => {
+      run: async (role, _timeoutMs, _signal, onStarted) => {
+        onStarted()
         roles.push(role)
         if (role === 'primary') {
           await new Promise(resolve => setTimeout(resolve, 8_000))
@@ -235,7 +266,8 @@ describe('enabled provider phase policy', () => {
       signal: new AbortController().signal,
       now: () => 0,
       outerDeadline: 1_500,
-      run: async (role, timeoutMs) => {
+      run: async (role, timeoutMs, _signal, onStarted) => {
+        onStarted()
         calls.push({ role, timeoutMs })
         if (role === 'primary') throw new ProviderFailure('rate_limit')
         return 'ok'

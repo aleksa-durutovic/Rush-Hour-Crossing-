@@ -396,6 +396,11 @@ function sendAdmissionDenial(
     denyAiRequest(response, events, operation, 409, operation === 'generation' ? 'GENERATION_BUSY' : 'ADVICE_BUSY', 'BUSY')
     return
   }
+  if (result.reason === 'budget_exhausted') {
+    const error = operation === 'generation' ? 'GENERATION_UNAVAILABLE' : 'ADVICE_UNAVAILABLE'
+    denyAiRequest(response, events, operation, 503, error, 'PROVIDER_UNAVAILABLE')
+    return
+  }
   response.setHeader('Retry-After', String(result.retryAfterSeconds ?? 1))
   denyAiRequest(response, events, operation, 429, 'AI_RATE_LIMITED', 'RATE_LIMITED')
 }

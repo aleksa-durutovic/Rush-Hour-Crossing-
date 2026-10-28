@@ -122,6 +122,23 @@ test.describe('verified level generator', () => {
     await expect(page.locator('#game-canvas')).toHaveAttribute('aria-label', before ?? '')
   })
 
+  test('S12 oversized streamed response cannot create a preview or change active play', async ({ page }) => {
+    await page.route('**/api/levels/generate', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: `${JSON.stringify(successfulPreview)}${' '.repeat(20_000)}`,
+    }))
+    const board = page.locator('#game-canvas')
+    const before = await board.getAttribute('aria-label')
+    await page.getByLabel('Target challenge rating').selectOption('1')
+    await page.getByRole('button', { name: 'Generate level' }).click()
+
+    await expect(page.getByRole('status', { name: 'Level generation status' })).toHaveText('The level response could not be verified.')
+    await expect(page.getByRole('button', { name: 'Play this level' })).toBeHidden()
+    await expect(board).toHaveAttribute('aria-label', before ?? '')
+    await expect(page.locator('#preview-canvas')).toBeHidden()
+  })
+
   test('cancellation clears the preview and preserves active play despite a late response', async ({ page }) => {
     let releaseResponse: (() => void) | undefined
     const gate = new Promise<void>((resolve) => { releaseResponse = resolve })

@@ -78,3 +78,17 @@ Retry after reported setup still found no `.env` at the selected worktree root (
 
 
 Live smoke test update (2026-10-27): `.env` is now present at the selected worktree root (presence only; contents not read). Live advice and generation API requests succeeded; generation's real solver verification passed. Failover stayed disabled and no Play action was triggered. Full results and the earlier transient 503 are in Evidence Section 13.
+
+## Feature010 security resource bounds — 2026-10-28
+
+| Source | Included | Purpose and boundary |
+|---|---|---|
+| `specs/010-ai-resource-bounds/` | Yes | Approved 60 provider starts per serving process and a 16,384-byte generator response-read limit; implementation tasks/evals and manual provider-account checklist |
+| `server/security/provider-attempt-budget.ts`, admission/services/failover and `src/level-generator/client.ts` | Yes | Actual start authorization/accounting and bounded fatal-UTF-8 response consumption |
+| Fake-only B00/S03 measurements and final gates in `docs/EVIDENCE_W08.md` | Yes | Reproducible local evidence; account controls remain owner-verified only |
+| Real credentials, provider-account settings and live calls | No | Not needed or authorized for local implementation/verification |
+
+The process allowance is shared by generation/advice and resets only with the serving
+process; it is not a monetary cap. Existing service limits, fallback, failover, proof/Play
+and advice delay remain authoritative. Browser/network buffering can exceed the delivered
+chunk boundary before application code sees a chunk.

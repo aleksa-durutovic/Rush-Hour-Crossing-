@@ -23,7 +23,11 @@ Read this file before changing the project. It points to the authoritative sourc
     handoff. Read IMPLEMENTATION_GUIDE.md first. Continue on codex/ai-level-generator-feature;
     preserve generator proof/Play, advice delay and failover budgets. Runtime hardening is implemented and verified; check docs/EVIDENCE_W08.md.
     The measured dependency-audit blocker was repaired before functional work. No live calls.
-12. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
+12. `specs/010-ai-resource-bounds/` — owner-approved cumulative provider-attempt and
+    generator response-read bounds. Read `IMPLEMENTATION_GUIDE.md` first; allowance is
+    60 starts per serving process, not a monetary cap. Preserve busy/rate precedence,
+    verified generator fallback, delayed advice, failover and proof/Play behavior.
+13. `docs/CONTEXT_MANIFEST.md` — which context is included and which is deliberately excluded.
 
 When sources conflict, the higher item wins. Report the conflict; do not resolve it silently.
 
@@ -40,6 +44,10 @@ When sources conflict, the higher item wins. Report the conflict; do not resolve
 - Feature 008: enabled routing and attempt accounting stay server-side; one selected backup
   is used sequentially within the existing operation budgets. It does not alter generator
   proof/approval or advice delay requirements.
+- Feature 010: the admission controller owns one immutable 60-start allowance per process;
+  each actual primary/retry/backup invocation is authorized at the provider lease boundary.
+  The generator client retains at most 16,384 payload bytes, stops at the first overflowing
+  chunk and fatal-decodes the bounded UTF-8 response.
 - `server/` — local Node.js API server (`node:http`, run with tsx). It may import the pure modules in `src/game/` and `src/config/`, never `src/main.ts`, `src/render/`, `src/input/`, or CSS. It is the only code that may read `process.env`; a future provider key lives only here.
 - `src/` never imports `server/` or Node.js built-ins and never reads `process.env` or `import.meta.env` (enforced by `tests/server/boundaries.test.ts`).
 - `scripts/dev.mjs` — starts Vite and the API server together for `npm run dev`.

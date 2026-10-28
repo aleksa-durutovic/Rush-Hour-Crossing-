@@ -15,6 +15,7 @@ import {
 } from '../ai/failover-policy'
 import { ProviderConfigurationError } from '../ai/provider-config'
 import type { TrackActiveWork } from '../security/active-work'
+import { ProviderAttemptBudgetExhaustedError } from '../security/provider-attempt-budget'
 
 export const ADVICE_ATTEMPT_TIMEOUT_MS = 15_000
 const MAX_ATTEMPTS = 2
@@ -107,11 +108,15 @@ export function createAdviceService(provider: AdviceProvider, options: AdviceSer
             wait: options.wait,
             onAttemptStart: (_role: ProviderRole) => { providerAttemptCount += 1 },
             onEvidence: recordEvidence,
-            run: async (role, timeoutMs, attemptSignal) => {
+            run: async (role, timeoutMs, attemptSignal, onStarted) => {
               const active = role === 'primary' ? provider : options.backupProvider!
               try {
-                return await startTrackedWork('provider', () => active.generateTip(input, attemptSignal, { timeoutMs }), trackWork)
+                return await startTrackedWork('provider', () => {
+                  onStarted()
+                  return active.generateTip(input, attemptSignal, { timeoutMs })
+                }, trackWork)
               } catch (error) {
+                if (error instanceof ProviderAttemptBudgetExhaustedError) throw error
                 throw normalizeAdviceProviderFailure(error)
               }
             },
@@ -183,6 +188,7 @@ async function runAttempt(
     const providerWork = startTrackedWork('provider', () => provider.generateTip(input, controller.signal, { timeoutMs }), trackWork)
     return await Promise.race([providerWork, timeout, callerAbort])
   } catch (error) {
+    if (error instanceof ProviderAttemptBudgetExhaustedError) throw error
     if (timedOut) throw new AttemptTimeoutError()
     throw error
   } finally {

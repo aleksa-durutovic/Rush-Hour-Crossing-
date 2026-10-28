@@ -8,6 +8,7 @@ import {
 } from '../../server/advice/service'
 import type { CompletedRunSummary } from '../../shared/advice-contract'
 import { ProviderFailure, type FailoverEvidenceEvent } from '../../server/ai/failover-policy'
+import { createProviderAttemptBudget } from '../../server/security/provider-attempt-budget'
 
 const summary: CompletedRunSummary = {
   outcome: 'lost',
@@ -29,6 +30,39 @@ function provider() {
 afterEach(() => vi.useRealTimers())
 
 describe('bounded advice service', () => {
+  it('does not call or count a denied disabled-mode retry', async () => {
+    const budget = createProviderAttemptBudget(1)
+    const fake = provider()
+    fake.generateTip.mockRejectedValue(new TransientProviderError('synthetic transient'))
+    const trackWork = <T>(kind: 'provider' | 'solver', start: () => Promise<T>): Promise<T> =>
+      kind === 'provider' ? budget.start(start) : start()
+
+    await expect(createAdviceService(fake).analyze(summary, new AbortController().signal, trackWork))
+      .rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
+    expect(fake.generateTip).toHaveBeenCalledOnce()
+    expect(budget.started).toBe(1)
+  })
+
+  it('does not emit a denied enabled backup start or switch', async () => {
+    const budget = createProviderAttemptBudget(1)
+    const primary = provider()
+    const backup = provider()
+    const events: FailoverEvidenceEvent[] = []
+    primary.generateTip.mockRejectedValue(new TransientProviderError('synthetic transient'))
+    backup.generateTip.mockResolvedValue(validTip)
+    const trackWork = <T>(kind: 'provider' | 'solver', start: () => Promise<T>): Promise<T> =>
+      kind === 'provider' ? budget.start(start) : start()
+
+    await expect(createAdviceService(primary, {
+      enabled: true, backupProvider: backup, onEvidence: event => events.push(event),
+    }).analyze(summary, new AbortController().signal, trackWork)).rejects.toMatchObject({ code: 'ADVICE_UNAVAILABLE' })
+    expect(primary.generateTip).toHaveBeenCalledOnce()
+    expect(backup.generateTip).not.toHaveBeenCalled()
+    expect(events.filter(event => event.event === 'attempt_started')).toHaveLength(1)
+    expect(events.some(event => event.event === 'role_switched')).toBe(false)
+    expect(budget.started).toBe(1)
+  })
+
   it('derives focus and evidence and accepts only the validated tip field', async () => {
     const fake = provider()
     fake.generateTip.mockResolvedValue(validTip)
@@ -189,6 +223,7 @@ describe('bounded advice service', () => {
     const result = await createAdviceService(primary, {
       enabled: true,
       backupProvider: backup,
+      now: () => 0,
     }).analyze(summary, new AbortController().signal)
 
     expect(result).toEqual({

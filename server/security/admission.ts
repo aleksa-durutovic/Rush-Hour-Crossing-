@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { createActiveWorkTracker, type ActiveWorkKind } from './active-work'
+import { createProviderAttemptBudget, type ProviderAttemptBudget } from './provider-attempt-budget'
 
 export type AiOperation = 'generation' | 'advice'
-export type AdmissionDenialReason = 'busy' | 'rate_limited'
+export type AdmissionDenialReason = 'busy' | 'rate_limited' | 'budget_exhausted'
 
 export interface AdmissionLease {
   readonly correlationId: string
@@ -28,6 +29,7 @@ export interface AdmissionController {
 export interface AdmissionControllerOptions {
   now?: () => number
   createCorrelationId?: () => string
+  providerAttemptBudget?: ProviderAttemptBudget
 }
 
 const MAX_GENERATION = 1
@@ -39,6 +41,7 @@ const WINDOW_MS = 60_000
 export function createAdmissionController(options: AdmissionControllerOptions = {}): AdmissionController {
   const now = options.now ?? (() => performance.now())
   const createCorrelationId = options.createCorrelationId ?? randomUUID
+  const providerAttemptBudget = options.providerAttemptBudget ?? createProviderAttemptBudget()
   const active = new Set<AdmissionLease>()
   const acceptedTimes: number[] = []
   let lastTime = Number.NEGATIVE_INFINITY
@@ -67,6 +70,7 @@ export function createAdmissionController(options: AdmissionControllerOptions = 
           retryAfterSeconds: Math.max(1, Math.ceil((earliestExpiry - sampledTime) / 1_000)),
         }
       }
+      if (providerAttemptBudget.exhausted) return { accepted: false, reason: 'budget_exhausted' }
 
       let lease: AdmissionLease
       let providerAttempts = 0
@@ -83,9 +87,15 @@ export function createAdmissionController(options: AdmissionControllerOptions = 
         get isLogicalTerminal() { return work.isLogicalTerminal },
         start<T>(kind: ActiveWorkKind, start: () => Promise<T>): Promise<T> {
           if (work.isLogicalTerminal) throw new Error('Cannot start work after the job is terminal.')
-          if (kind === 'provider') providerAttempts += 1
-          else executedToolCalls += 1
-          return work.track(start())
+          if (kind === 'solver') {
+            executedToolCalls += 1
+            return work.track(start())
+          }
+          const started = providerAttemptBudget.start(() => {
+            providerAttempts += 1
+            return start()
+          })
+          return work.track(started)
         },
         markTerminal: () => work.markLogicalTerminal(),
       }

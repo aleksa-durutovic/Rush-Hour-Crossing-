@@ -79,6 +79,51 @@ test('T00 real controls preview before explicit Play and preserve ordinary gamep
   expect(fixture.solverStarts).toHaveLength(2)
 })
 
+test('B15 browser reload keeps the process budget exhausted and delays unavailable advice', async ({ page }) => {
+  await fixture.close()
+  fixture = await startW08Server({ port: 4173, staticDir: resolve('dist'), providerAttemptLimit: 3 })
+  await page.goto('/?crossingsToWin=1&difficulty=easy')
+
+  await page.getByLabel('Target challenge rating').selectOption('1')
+  const generation = page.waitForResponse('**/api/levels/generate')
+  await page.getByRole('button', { name: 'Generate level' }).click()
+  expect((await generation).status()).toBe(200)
+  await expect(page.getByRole('button', { name: 'Play this level' })).toBeVisible()
+  expect(fixture.sdkCalls).toHaveLength(2)
+
+  const firstAdvice = page.waitForResponse('**/api/advice')
+  await playActions(page, WINNING_PATHS.easy.actions)
+  expect((await firstAdvice).status()).toBe(200)
+  await expect(page.locator('#ai-advice')).toHaveText('')
+  expect(fixture.sdkCalls).toHaveLength(3)
+
+  await page.keyboard.press('r')
+  const delayedAdvice = page.waitForResponse('**/api/advice')
+  await playActions(page, WINNING_PATHS.easy.actions)
+  expect((await delayedAdvice).status()).toBe(503)
+  await expect(page.locator('#ai-advice')).toContainText('Previous run')
+  expect(fixture.sdkCalls).toHaveLength(3)
+
+  await page.keyboard.press('r')
+  const unavailableAdvice = page.waitForResponse('**/api/advice')
+  await playActions(page, WINNING_PATHS.easy.actions)
+  expect((await unavailableAdvice).status()).toBe(503)
+  await expect(page.locator('#ai-advice')).toContainText('unavailable')
+  expect(fixture.sdkCalls).toHaveLength(3)
+
+  await page.reload()
+  await expect(page.locator('#game-canvas')).toHaveAttribute('aria-label', /status active/)
+  await page.keyboard.press('Space')
+  await expect(page.locator('#game-canvas')).toHaveAttribute('aria-label', /tick 1/)
+  const deniedGeneration = page.waitForResponse('**/api/levels/generate')
+  await page.getByRole('button', { name: 'Generate level' }).click()
+  expect((await deniedGeneration).status()).toBe(503)
+  await expect(page.getByRole('status', { name: 'Level generation status' })).toHaveText('The level response could not be verified.')
+  await expect(page.getByRole('button', { name: 'Play this level' })).toBeHidden()
+  await expect(page.locator('#game-canvas')).toHaveAttribute('aria-label', /tick 1, status active/)
+  expect(fixture.sdkCalls).toHaveLength(3)
+})
+
 test('T15 forged URL and localStorage values do not replace initial game state', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('rush-hour-crossing', JSON.stringify({ score: 999_999, lives: 0, difficulty: 'admin' }))

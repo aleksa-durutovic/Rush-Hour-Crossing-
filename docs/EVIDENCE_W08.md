@@ -452,3 +452,227 @@ The browser regression shell had GEMINI_API_KEY empty and AI_FAILOVER_ENABLED=fa
 The branch matched its fetched GitHub upstream before commit, permitting an ordinary
 fast-forward push. The Git commit and remote branch reference identify this revision;
 main submission and actual student contributions remain separate requirements.
+
+## 17. Fresh verification for student report drafts - 2026-10-27
+
+- Claim: the report drafts referenced earlier results; the user requested a new execution
+  and updates to both drafts when needed.
+- Signal: explicitly tested worktree HEAD is 779cd397b4797a551607c69169f96d88b586e835,
+  branch codex/ai-level-generator-feature. Initial working-tree changes were only the two
+  untracked student report drafts. Node v24.14.0 and npm 11.12.1 meet project requirements.
+- Change: no runtime source, test expectations or dependencies changed. Ran the existing
+  checks afresh and updated both report drafts to distinguish this Codex-run verification
+  from student-reported personal checks.
+
+| Command | Actual fresh result |
+|---|---|
+| npm ci | PASS;85 packages added,86 audited,zero vulnerabilities |
+| npm run typecheck | PASS;browser and server TypeScript projects |
+| npm run test:run | PASS;38 files,391 tests |
+| npm audit --audit-level=high | PASS;zero vulnerabilities |
+| npm run test:security | PASS;23 files,258 unit tests;production build119 modules;8 browser tests |
+| npm run test:e2e | PASS;29 browser tests |
+
+- Result: all checks passed again with unchanged counts. The258 security/server unit tests
+  are a subset of391, not additional distinct tests. The browser suites cover37 distinct
+  cases in total. Production build was also exercised by the e2e server startup.
+- Security browsers used the existing fake-backed fixture and real solver. For existing
+  browser regressions, a Node child-process wrapper explicitly supplied GEMINI_API_KEY
+  as an empty string and AI_FAILOVER_ENABLED=false before starting npm, ensuring these
+  environment values persist through the server environment loader. No live provider
+  call occurred and no .env content was inspected.
+- Existing Chromium installation successfully ran both browser suites. Informational
+  output included the node-domexception deprecation and NO_COLOR/FORCE_COLOR warning;
+  neither caused a failed check.
+- Both student reports remain local drafts requiring learner completion/confirmation.
+  No commit, push, merge or deployment was performed for this verification request.
+
+## 18. Feature010 planning-only security addendum - 2026-10-28
+
+- Claim: the existing five admissions/rolling minute and operation ceilings do not limit
+  cumulative provider invocations; generator browser byte checking follows full text read.
+- Signal: read actual admission/service/phase and browser-client sources at reviewed
+  HEAD779cd397b4797a551607c69169f96d88b586e835, matching the live remote branch. No new
+  exhaustion/128KiB probe ran here; the128KiB review observation was supplied by the user.
+- Change: documentation only in specs/010-ai-resource-bounds, ignored local Spec Kit
+  selection010, and appended evidence/AI log. No application, test or dependency changes.
+  Sixty attempts/process and restart-reset semantics remain proposals for owner review.
+- Result: specification/plan/contracts/data/research,20 future tasks, prewritten B00-B18,
+  S01-S12/G01-G03/M01 expectations, short handoff and separate manual Google checklist.
+  All new evals NOT RUN; account settings unverified. Final consistency analysis is read-only
+  and delivered in the chat; it does not authorize implementation.
+
+| Actual planning check | Result |
+|---|---|
+| Toolchain | Node24.14.0/npm11.12.1 |
+| npm ci | PASS;85 added/86 audited;0 vulnerabilities |
+| npm run typecheck | PASS;both TypeScript projects |
+| npm run test:run | PASS;38 files/391 tests |
+| npm run build | PASS;119 modules;Vite8.3.5 |
+| npm audit --audit-level=high | PASS;0 vulnerabilities |
+| npm run test:security | PASS;23 files/258 unit tests,build,8 browser tests |
+| npm run test:e2e initial invocation | Startup failed:4173 occupied by still-running security fixture;0 cases ran |
+| npm run test:e2e serial rerun | PASS;29 browser tests |
+| Chromium installation | Not rerun;existing browser ran both suites |
+| Documentation structure/link checks | PASS;13 feature files,20 sequential tasks,US1=9/US2=3/US3=2,no detected broken local links/placeholders/trailing whitespace |
+| git diff --check | PASS |
+
+The258 unit cases are within391, not additional tests. Browser cases total37. Tests used
+fake transport/synthetic configuration; child commands explicitly had an empty real key and
+disabled failover. No credential content was inspected or provider request made. Commands,
+initial dirty-file hashes, target/ref evidence, known009 status drift and limitations are
+in specs/010-ai-resource-bounds/BASELINE.md. Browser suites must run serially on4173.
+No baseline gate remains failed after rerun; planned fixes themselves remain unimplemented.
+Preserved existing documentation edits; no reset/stash/checkout/commit/push/merge/deploy.
+
+## 19. Feature010 owner decisions recorded - 2026-10-28
+
+- Claim: owner review resolves the three pending policy decisions from the010 plan.
+- Signal: direct owner response, "1. 60 attempts per server process 2. accepted 3. approved".
+- Change: recorded P1/P2/P3 approval across the010 spec, plan, contract, data model,
+  tasks, handoff and supporting documents. Qualified the503 acceptance scenario with
+  otherwise-admissible/busy-rate precedence and aligned quickstart's B00 probe order.
+  Historical baseline results and existing documentation text are preserved.
+- Result: allowance60/process, process-restart reset and existing exhaustion/fallback/
+  delayed-advice handling are settled. Implementation still needs a separate instruction.
+  All20 future tasks remain unchecked; account controls remain unverified.
+- No application/test/dependency change or fresh runtime suite execution. No live call,
+  credential inspection, account modification, branch change or publication.
+
+## 20. Feature010 resource bounds implementation and verification - 2026-10-28
+
+- **Claim**: Rolling admission and per-job limits do not bound cumulative provider starts;
+  checking the generator body after `response.text()` consumes an oversized body first.
+- **Pre-change signal**: Fresh B00 used the actual HTTP handler/services/real solver with
+  fake SDK transport and advanced monotonic time across request cycles. It observed63
+  actual starts, exceeding the approved60. Fresh S03 used the existing generator client
+  and a controlled128KiB stream; it consumed131,072 bytes before rejecting the response.
+  Both failures reached the behavior under evaluation; neither was a missing-import error.
+- **Change**: Added an immutable, server-process budget of60 starts, shared by both routes
+  through the one production admission controller. Each provider lease start atomically
+  authorizes/debits before its callback, service/lease counters and underlying-work tracking;
+  sync throws still count, denied starts do not. Empty admission returns fixed503 after
+  existing busy/rate precedence. Exhaustion during generation preserves provider-attempt
+  recovery and verified incomplete fallback; advice stays unavailable through its existing
+  delay. Added private generator streaming read capped at16,384 delivered bytes, cancelling
+  immediately on the first overflow, fatal UTF-8 decoding at bounded EOF, strict JSON/DTO
+  validation, and abort/reader cleanup. No dependency, game logic, preset, solver, DTO,
+  advice reader, provider setting or failover ceiling changed.
+- **Corrected signal**: The same B00 expectation passed with exactly60 starts over the same
+  request schedule; subsequent generation/advice requests were denied without extra solver
+  work. S03 passed after17 reads/17,408 delivered bytes (16,384 retained limit plus the
+  first 1,024-byte overflowing chunk), one cancellation request and no18th read. The
+  overflowing chunk was not retained. Exact-limit, misleading-header, malformed UTF-8/JSON,
+  cleanup rejection/non-settling cancel, and reader/listener release cases also passed.
+- **Focused behavior**: Small-limit real-HTTP traces verified shared generation/advice
+  accounting, initial fixed503 with no `Retry-After`, mid-run `provider_attempt_limit`
+  fallback, final proof after the final token, retry/backup denial without false start or
+  switch events, synchronous-throw accounting, busy/rate precedence, and cancellation before
+  the enabled invocation microtask. Browser B15 used one fake-backed process: reload did not
+  refill, ordinary gameplay remained active, and advice unavailability appeared only after
+  the existing one-run delay. Browser S12 rejected an oversized response without changing
+  active play or enabling Play; existing valid-preview and stale-cancellation controls passed.
+- **Actual final checks**: Node24.14.0/npm11.12.1; `npm ci` PASS (85 packages installed,
+  86 audited,0 vulnerabilities); `npm run typecheck` PASS; `npm run test:run` PASS
+  (42 files/421 tests); `npm run build` PASS (119 modules); `npm audit --audit-level=high`
+  PASS (0 findings); `npx playwright install chromium` exited0; `npm run test:security`
+  PASS (26 files/274 unit/integration tests, production build,9 browser tests); and
+  `npm run test:e2e` PASS (30 browser tests). Browser suites ran serially. All
+  test-launching commands had `GEMINI_API_KEY` explicitly empty and
+  `AI_FAILOVER_ENABLED=false`; the security fixture used only its synthetic key/fake SDK.
+- **Limits and account status**: No live provider call or credential/account-setting
+  inspection occurred. Manual M1-M7 remain pending/unverified. The60-start process allowance
+  is not a monetary cap, resets when that Node process restarts, and does not refill on
+  browser reload. A browser/network layer may buffer or deliver an oversized chunk before
+  application cancellation; only retained generator payload bytes are capped locally.
+- **Delivery**: Work remains local on `codex/ai-level-generator-feature`; no commit, push,
+  merge, deployment or submission to `main` occurred. Existing user-edited evidence/log
+  content was retained and appended to.
+
+## 21. Independent review for the Week08 report - 2026-10-28
+
+- **Scope**: The user requested review of the latest fixes and an update to the existing
+  Desktop Week08 report. Reviewed Feature010's process allowance and generator response
+  reader, plus the earlier fallback-event/cumulative-timing corrections. Used the explicit
+  feature worktree, HEAD `779cd397b4797a551607c69169f96d88b586e835`, branch
+  `codex/ai-level-generator-feature`; the Feature010 changes were already present and
+  uncommitted. The original main checkout is a separate older dirty tree.
+- **Code review**: Confirmed the shared production admission controller, synchronous
+  provider-start gate, debit/counter alignment, non-transient exhaustion, fixed initial
+  503, verified recovery, streaming byte check before retention, fatal decoding and
+  reader/cancellation cleanup. No additional runtime defect found in the two reviewed
+  fixes. B00/S03 and existing proof/Play/advice/cancellation cases ran in the suites below.
+- **New finding**: The first full unit run returned exit1: 41 files passed/1 failed,
+  420 tests passed/1 failed. `tests/server/advice-service.test.ts:235` expects the backup
+  timeout to equal exactly7,000ms while using the real monotonic clock; the actual value
+  was6,999ms after the policy's whole-millisecond clipping. The timeout satisfies the
+  production cap; the assertion is timing-sensitive. The isolated file then passed19/19;
+  an unchanged full rerun passed42 files/421 tests. A passing rerun does not resolve this
+  test instability. No source or test expectation was changed during this review.
+
+| Current review check | Actual result |
+|---|---|
+| Node/npm | v24.14.0 /11.12.1 |
+| npm ci | PASS;85 packages added,86 audited,0 vulnerabilities |
+| npm run typecheck | PASS;both projects |
+| npm run test:run, initial | FAIL;420 passed/1 failed as described above |
+| focused advice-service rerun | PASS;19 tests |
+| npm run test:run, unchanged rerun | PASS;42 files/421 tests |
+| npm audit --audit-level=high | PASS;0 vulnerabilities |
+| npm run test:security | PASS;26 files/274 unit tests,build119 modules,9 browser tests |
+| npm run test:e2e | PASS;30 browser tests |
+| git diff --check | PASS before report/evidence edits |
+
+- **Execution limits**: Browser suites ran serially with a Node child-process wrapper
+  explicitly supplying an empty `GEMINI_API_KEY` and `AI_FAILOVER_ENABLED=false`.
+  Existing Chromium ran both suites; no browser installation was needed. Security tests
+  used synthetic transport and the real solver. No live provider call, credential
+  inspection or account change occurred. The274 security/server unit tests are a subset
+  of421; browser suites comprise39 cases.
+- **Report outcome**: Updated the user-named Desktop Week08 report as `NACRT`, preserving
+  the learner-supplied contribution and tutor-help statements. Added both implemented
+  fixes and fresh results, including the initial failure and unresolved timing-sensitive
+  test. Manual tasks T016/T017 and account items M1–M7 remain pending. The latest code
+  is local/uncommitted, and the reviewed feature commit is not an ancestor of local main;
+  no fresh remote-delivery claim is made. No commit, push, merge or deployment occurred.
+
+## 22. Authorized publication and deterministic timeout-test correction - 2026-10-28
+
+- **Authorization**: The user explicitly requested pushing the latest fixes to GitHub.
+  This authorizes a normal commit and push to `codex/ai-level-generator-feature`, not a
+  merge into main, deployment, account change or live provider call. After `git fetch
+  origin`, local HEAD and the remote feature branch both resolved to `779cd397` with
+  zero ahead/behind commits. The previously reviewed Feature010 files were preserved.
+- **Claim and prior signal**: Section21 recorded a real full-suite failure caused by an
+  exact7,000ms assertion using a real monotonic clock; production legitimately supplied
+  6,999ms. Passing reruns did not resolve that unstable test.
+- **Smallest correction**: Injected the service's existing `now: () => 0` test seam in
+  that one immediate quota-to-backup scenario. The exact7,000ms assertion and real
+  production timeout clipping remain unchanged; existing fake-clock phase/deadline
+  tests still exercise time progression. No runtime feature was added for this fix.
+- **Result**: Focused advice-service/failover suites passed2 files/32 tests. The fresh
+  publication gates below then passed without retries. Clarified README/AGENTS response
+  wording to distinguish retained16,384-byte payload from an overflowing delivered chunk;
+  recorded the subsequent publication authorization in the Feature010 package.
+
+| Fresh publication gate | Actual result |
+|---|---|
+| Toolchain | Node v24.14.0/npm11.12.1 |
+| npm ci | PASS;85 added,86 audited,0 vulnerabilities |
+| npm run typecheck | PASS;both projects |
+| npm run test:run | PASS;42 files/421 tests |
+| npm run build | PASS;119 modules |
+| npm audit --audit-level=high | PASS;0 vulnerabilities |
+| Chromium availability | Existing Chromium1243/headless shell confirmed by install --list; both browser suites ran |
+| npm run test:security | PASS;26 files/274 unit tests,build,9 browser tests |
+| npm run test:e2e | PASS;30 browser tests |
+| git diff --check | PASS before publication-record edits |
+
+All test-launching child processes explicitly received an empty real provider key and
+disabled failover. Browser suites ran serially; transport was fake and the local solver
+real. The274 tests are a subset of421; browser cases total39. Core game/presets/golden
+paths, shared DTOs and SDK owner remain unchanged. The baseline tag was only read and
+still resolves to `daa46329d91a5a95e1a3bde2a78c962fca82cb47`. Manual T016/T017 and Google
+M1–M7 remain pending; publication does not imply account verification or submission to
+main. This is the pre-commit publication checkpoint; actual Git output and the remote
+branch receipt establish commit/push completion.

@@ -40,6 +40,21 @@ The Session 003 core game, runtime configuration validation, deterministic rule 
 
 The authoritative gameplay specification is `docs/GAME_SPEC.md`. The opt-in Feature 008 backup uses Gemini 2.5 Flash for the existing generation and advice operations; other providers or backends, deployment, audio, real-time movement, and additional game mechanics remain out of scope.
 
+### AI resource bounds
+
+Generation and delayed advice share an allowance of 60 actual provider starts per serving
+Node process. Primary, retry and backup calls each use one start. Browser reload and elapsed
+time do not refill it; restarting the server or its watch process starts a fresh allowance.
+This limit bounds local provider invocations, not exact monetary spend. Once exhausted,
+advice becomes unavailable after the existing completed-run delay. Generation may return
+only its existing verified, incomplete fallback, which still requires explicit Play.
+
+The browser generator client retains at most 16,384 response bytes and stops reading on
+the first overflowing chunk, without retaining it. It then performs fatal UTF-8 decoding,
+JSON parsing and the existing strict response validation for bounded complete responses.
+This does not control bytes delivered in an oversized chunk or buffered by the browser
+or network before a chunk is delivered.
+
 ### Optional AI failover
 
 Failover is disabled unless the server process has `AI_FAILOVER_ENABLED=true`. The server

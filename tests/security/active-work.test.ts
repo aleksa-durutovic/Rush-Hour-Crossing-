@@ -113,7 +113,8 @@ describe('T16 active and draining work lifetime', () => {
         now: () => Date.now(),
         wait: async () => {},
         onAttemptStart: (role) => roles.push(role),
-        run: (role) => {
+        run: (role, _timeout, _signal, onStarted) => {
+          onStarted()
           const pending = role === 'primary' ? primary.promise : Promise.resolve('backup result')
           return work.track(pending)
         },

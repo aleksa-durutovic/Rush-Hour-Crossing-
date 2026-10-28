@@ -8,6 +8,7 @@ import {
 import { GeneratorModelError, type GeneratorDecisionContext, type LevelGeneratorModel } from '../../server/level-generator/model'
 import type { SolveLevelTool } from '../../server/level-generator/solve-tool'
 import { ProviderFailure, type ProviderRole } from '../../server/ai/failover-policy'
+import { createProviderAttemptBudget } from '../../server/security/provider-attempt-budget'
 
 const signal = (): AbortSignal => new AbortController().signal
 const easyTemplate = getGeneratedLevelTemplate(1)
@@ -33,6 +34,62 @@ function modelWith(script: (context: GeneratorDecisionContext, decision: number)
 }
 
 describe('bounded level generator service', () => {
+  it('does not count or retry a denied disabled-mode invocation and returns only verified recovery', async () => {
+    const budget = createProviderAttemptBudget(1)
+    const model = modelWith((_context, decision) => {
+      if (decision === 1) return { kind: 'tool_request', name: 'solveLevel', arguments: { lanes: easyTemplate } }
+      return finalFor(_context)
+    })
+    const trackWork = <T>(kind: 'provider' | 'solver', start: () => Promise<T>): Promise<T> =>
+      kind === 'provider' ? budget.start(start) : start()
+    const result = await createLevelGeneratorService({ model }).generate(
+      { targetDifficulty: 1, lives: 3, crossingsToWin: 1 }, signal(), trackWork)
+
+    expect(result).toMatchObject({ kind: 'preview', status: 'stopped', completed: false, source: 'last_verified', stopReason: 'provider_attempt_limit' })
+    expect(result.counters).toMatchObject({ stepCount: 1, providerAttemptCount: 1, retryCount: 0, toolCallCount: 1 })
+    expect(model.decide).toHaveBeenCalledOnce()
+    expect(budget.started).toBe(1)
+  })
+
+  it('finishes independent final verification after the last allowed model decision', async () => {
+    const budget = createProviderAttemptBudget(2)
+    const model = modelWith((_context, decision) => decision === 1
+      ? { kind: 'tool_request', name: 'solveLevel', arguments: { lanes: easyTemplate } }
+      : finalFor(_context))
+    const solver = createSolveLevelTool()
+    const execute = vi.spyOn(solver, 'execute')
+    const trackWork = <T>(kind: 'provider' | 'solver', start: () => Promise<T>): Promise<T> =>
+      kind === 'provider' ? budget.start(start) : start()
+
+    const result = await createLevelGeneratorService({ model, solver }).generate(
+      { targetDifficulty: 1, lives: 3, crossingsToWin: 1 }, signal(), trackWork)
+
+    expect(result).toMatchObject({ kind: 'preview', status: 'completed', completed: true, stopReason: 'goal_completed' })
+    expect(result.counters.providerAttemptCount).toBe(2)
+    expect(execute).toHaveBeenCalledTimes(2)
+    expect(budget.started).toBe(2)
+  })
+
+  it('does not emit a backup start or switch when the process budget denies failover', async () => {
+    const budget = createProviderAttemptBudget(1)
+    const primary: LevelGeneratorModel = { decide: vi.fn(async () => { throw new ProviderFailure('rate_limit') }) }
+    const backup: LevelGeneratorModel = { decide: vi.fn(async () => ({ kind: 'refusal', reason: 'cannot_satisfy_goal' })) }
+    const events: { event: string; role: string; attempt: number }[] = []
+    const trackWork = <T>(kind: 'provider' | 'solver', start: () => Promise<T>): Promise<T> =>
+      kind === 'provider' ? budget.start(start) : start()
+    const result = await createLevelGeneratorService({
+      model: primary, backupModel: backup, failoverEnabled: true, onEvidence: event => events.push(event),
+    }).generate({ targetDifficulty: 1, lives: 3, crossingsToWin: 1 }, signal(), trackWork)
+
+    expect(result).toMatchObject({ kind: 'preview', status: 'stopped', completed: false, source: 'template', stopReason: 'provider_attempt_limit' })
+    expect(result.counters).toMatchObject({ providerAttemptCount: 1, retryCount: 0 })
+    expect(primary.decide).toHaveBeenCalledOnce()
+    expect(backup.decide).not.toHaveBeenCalled()
+    expect(events.filter(event => event.event === 'attempt_started')).toHaveLength(1)
+    expect(events.some(event => event.event === 'role_switched')).toBe(false)
+    expect(budget.started).toBe(1)
+  })
+
   it('supplies previous validated traffic and rating bands without exposing internal proof', async () => {
     const model = modelWith((context, decision) => {
       expect(context).toMatchObject({ ratingBands: { 3: { minimumMoves: 11, maximumMoves: 12 } } })

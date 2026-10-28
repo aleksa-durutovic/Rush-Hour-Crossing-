@@ -33,6 +33,7 @@ import {
 import { ProviderConfigurationError } from '../ai/provider-config'
 import { createSolveLevelTool, replayProof, type SolveLevelTool, type SolveLevelProof } from './solve-tool'
 import type { TrackActiveWork } from '../security/active-work'
+import { ProviderAttemptBudgetExhaustedError } from '../security/provider-attempt-budget'
 
 export class InvalidGenerationRequestError extends Error {
   readonly code = 'INVALID_GENERATION_REQUEST'
@@ -179,6 +180,7 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
         }
 
         run.counters.stepCount += 1
+        const attemptsBeforeDecision = run.counters.providerAttemptCount
         let rawDecision: unknown
         let decisionReady = false
         if (options.failoverEnabled) {
@@ -197,13 +199,18 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
                 if (role === 'backup') run.providerRole = 'backup'
               },
               onEvidence: recordEvidence,
-              run: async (role, timeoutMs, attemptSignal) => {
+              run: async (role, timeoutMs, attemptSignal, onStarted, attemptNumber) => {
+                const projectedCounters = {
+                  ...run.counters,
+                  providerAttemptCount: run.counters.providerAttemptCount + 1,
+                  retryCount: run.counters.retryCount + (attemptNumber > 1 ? 1 : 0),
+                }
                 const context = buildGeneratorDecisionContext(
                   run.runId,
                   run.request,
-                  run.counters,
+                  projectedCounters,
                   [...run.candidates.values()].map(record => record.evidence),
-                  { counters: run.counters, elapsedMs: now() - run.startTime, solverExecutions: run.solverExecutions },
+                  { counters: projectedCounters, elapsedMs: now() - run.startTime, solverExecutions: run.solverExecutions },
                   [...run.candidates.values()].map(record => ({
                     candidateId: record.candidateId,
                     evaluationId: record.evaluationId,
@@ -212,8 +219,12 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
                 )
                 const model = role === 'primary' ? options.model : options.backupModel!
                 try {
-                  return await withActiveWork('provider', () => model.decide(context, attemptSignal, { timeoutMs }), trackWork)
+                  return await withActiveWork('provider', () => {
+                    onStarted()
+                    return model.decide(context, attemptSignal, { timeoutMs })
+                  }, trackWork)
                 } catch (error) {
+                  if (error instanceof ProviderAttemptBudgetExhaustedError) throw error
                   throw toGeneratorProviderFailure(error)
                 }
               },
@@ -223,6 +234,10 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
           } catch (error) {
             if (callerSignal.aborted || (error instanceof ProviderFailure && error.category === 'cancelled')) {
               return unavailable(run, 'cancelled', 'stopped', now)
+            }
+            if (error instanceof ProviderAttemptBudgetExhaustedError) {
+              if (run.counters.providerAttemptCount === attemptsBeforeDecision) run.counters.stepCount -= 1
+              return stopOperationally('provider_attempt_limit')
             }
             if (run.counters.providerAttemptCount >= LEVEL_GENERATOR_POLICY.maxProviderAttempts) {
               return stopOperationally('provider_attempt_limit')
@@ -242,21 +257,29 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
           if (run.counters.providerAttemptCount >= LEVEL_GENERATOR_POLICY.maxProviderAttempts) {
             return stopOperationally('provider_attempt_limit')
           }
-          run.counters.providerAttemptCount += 1
+          const projectedCounters = {
+            ...run.counters,
+            providerAttemptCount: run.counters.providerAttemptCount + 1,
+            retryCount: run.counters.retryCount + (attempt > 1 ? 1 : 0),
+          }
           try {
             const context = buildGeneratorDecisionContext(
               run.runId,
               run.request,
-              run.counters,
+              projectedCounters,
               [...run.candidates.values()].map((record) => record.evidence),
-              { counters: run.counters, elapsedMs: now() - run.startTime, solverExecutions: run.solverExecutions },
+              { counters: projectedCounters, elapsedMs: now() - run.startTime, solverExecutions: run.solverExecutions },
               [...run.candidates.values()].map(record => ({ candidateId: record.candidateId, evaluationId: record.evaluationId, lanes: record.lanes })),
             )
-            rawDecision = await callModelWithTimeout(options.model, context, callerSignal, run, now, trackWork)
+            rawDecision = await callModelWithTimeout(options.model, context, callerSignal, run, now, trackWork, attempt)
             decisionReady = true
             break
           } catch (error) {
             if (callerSignal.aborted) return unavailable(run, 'cancelled', 'stopped', now)
+            if (error instanceof ProviderAttemptBudgetExhaustedError) {
+              if (run.counters.providerAttemptCount === attemptsBeforeDecision) run.counters.stepCount -= 1
+              return stopOperationally('provider_attempt_limit')
+            }
             if (now() >= run.deadline || now() >= run.decisionCutoff) return stopOperationally('deadline')
             const transient = error instanceof GeneratorModelError &&
               ['transient', 'rate_limit', 'timeout', 'temporary_unavailable'].includes(error.kind)
@@ -268,7 +291,6 @@ export function createLevelGeneratorService(options: LevelGeneratorServiceOption
                 : 'provider_failed'
               return stopOperationally(reason, reason === 'provider_refusal' ? 'stopped' : 'failed')
             }
-            run.counters.retryCount += 1
             try {
               await waitBeforeRetry(LEVEL_GENERATOR_POLICY.retryDelayMs, callerSignal)
             } catch {
@@ -450,6 +472,7 @@ async function callModelWithTimeout(
   run: RunState,
   now: () => number,
   trackWork?: TrackActiveWork,
+  attemptNumber = 1,
 ): Promise<unknown> {
   const remainingMs = Math.max(0, Math.min(
     LEVEL_GENERATOR_POLICY.providerAttemptTimeoutMs,
@@ -474,7 +497,11 @@ async function callModelWithTimeout(
     else callerSignal.addEventListener('abort', onCallerAbort, { once: true })
   })
   try {
-    return await Promise.race([withActiveWork('provider', () => model.decide(context, signal, { timeoutMs: remainingMs }), trackWork), timeout, aborted])
+    return await Promise.race([withActiveWork('provider', () => {
+      run.counters.providerAttemptCount += 1
+      if (attemptNumber > 1) run.counters.retryCount += 1
+      return model.decide(context, signal, { timeoutMs: remainingMs })
+    }, trackWork), timeout, aborted])
   } finally {
     if (timer !== undefined) clearTimeout(timer)
     callerSignal.removeEventListener('abort', onCallerAbort)

@@ -8,6 +8,7 @@ import type { FailoverEvidenceEvent } from '../../../server/ai/failover-policy'
 import { createProviderSet, GEMINI_BACKUP_PROFILE, readProviderConfig } from '../../../server/ai/provider-config'
 import { createRequestHandler } from '../../../server/app'
 import { createAdmissionController } from '../../../server/security/admission'
+import { createProviderAttemptBudget } from '../../../server/security/provider-attempt-budget'
 import { createSecurityEventStore, type SecurityEvent } from '../../../server/security/events'
 import { allowedHostsFor } from '../../../server/config'
 import type { GeneratorDecisionContext } from '../../../server/level-generator/model'
@@ -26,6 +27,7 @@ export interface W08SdkCall {
 
 export interface W08ServerOptions {
   port?: number
+  providerAttemptLimit?: number
   staticDir?: string
   failoverEnabled?: boolean
   apiKey?: string
@@ -149,7 +151,12 @@ export async function startW08Server(options: W08ServerOptions = {}): Promise<W0
   const port = (server.address() as AddressInfo).port
   server.on('request', createRequestHandler({
     allowedHosts: allowedHostsFor(port),
-    admissionController: createAdmissionController({ now }),
+    admissionController: createAdmissionController({
+      now,
+      ...(options.providerAttemptLimit === undefined
+        ? {}
+        : { providerAttemptBudget: createProviderAttemptBudget(options.providerAttemptLimit) }),
+    }),
     securityEvents: securityEventStore,
     staticDir: options.staticDir,
     adviceService,
