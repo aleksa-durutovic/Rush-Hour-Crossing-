@@ -69,4 +69,14 @@ describe('completed-run Option C summary', () => {
       score: 100,
     })
   })
+
+  it('labels generated traffic explicitly while retaining exactly eight summary fields', () => {
+    const summary = buildCompletedRunSummary(gameState(), 'generated')
+
+    expect(summary).toMatchObject({ outcome: 'lost', difficulty: 'generated' })
+    expect(Object.keys(summary ?? {}).sort()).toEqual([
+      'crossings', 'difficulty', 'outcome', 'remainingLives', 'score', 'startingLives', 'targetCrossings', 'ticks',
+    ])
+    expect(buildCompletedRunSummary(gameState())?.difficulty).toBe('easy')
+  })
 })

@@ -67,7 +67,7 @@ describe('one-run-delayed advice lifecycle', () => {
     expect(third.state.visibleNotice).toEqual(third.noticeToDisplay)
   })
 
-  it.each(['restart', 'difficulty'] as const)(
+  it.each(['restart', 'difficulty', 'generated'] as const)(
     'keeps ready advice hidden through a mid-run %s reset',
     (reason) => {
       const first = completeAdviceRun(createAdviceLifecycleState(), lostRun)
@@ -87,7 +87,7 @@ describe('one-run-delayed advice lifecycle', () => {
     },
   )
 
-  it.each(['restart', 'difficulty'] as const)(
+  it.each(['restart', 'difficulty', 'generated'] as const)(
     'clears a displayed notice on a post-result %s reset',
     (reason) => {
       const first = completeAdviceRun(createAdviceLifecycleState(), lostRun)

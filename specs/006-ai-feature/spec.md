@@ -2,7 +2,7 @@
 
 **Feature**: 006-ai-feature
 
-**Status**: Approved for implementation at the user’s request on 2026-09-29 — Option C selected; student-pair scope approval recorded
+**Status**: Option C scope approved 2026-09-29; Feature 008 failover addendum approved by user 2026-10-06
 
 **Created**: 2026-09-29
 
@@ -71,7 +71,7 @@ As a player, I want analysis to use only the run measurements needed for Option 
 - Changes to gameplay rules R1–R7, presets, score, controls, or win/loss behavior.
 - In-game hints, next-move suggestions, tool/function calling, autonomous agents, or AI-controlled traffic.
 - Collision/action-history telemetry, full game-state submission, identifiers, accounts, saved history, or persistence.
-- Any provider other than Gemini, provider fallback, deployment, database, or unrelated network service.
+- Any provider family other than Gemini for this advice operation, deployment, database, or unrelated network service. Feature 008 may route to one application-selected Gemini backup (`gemini-2.5-flash`) only when explicitly enabled.
 - Returning a provider-selected category or evidence; those are derived by the backend from validated measurements.
 
 ## Requirements
@@ -86,7 +86,7 @@ As a player, I want analysis to use only the run measurements needed for Option 
 - **FR-006**: Restart or difficulty switch after advice has been displayed MUST clear the visible notice.
 - **FR-007**: If the next run ends while the previous analysis is pending, the system MUST invalidate or abort that analysis, show the safe unavailable message in the previous-run slot, and begin analysis for the newly completed run without waiting for the old request.
 - **FR-008**: A late response for a superseded job MUST be ignored.
-- **FR-009**: Analysis MUST have at most two provider attempts, each with a 15-second deadline. Only transient provider/network failures and attempt timeout are retryable. Schema-invalid output, invalid local input, missing configuration, and permanent provider failures MUST NOT be retried.
+- **FR-009**: In disabled mode, analysis MUST preserve its existing primary-only behavior: at most two primary attempts, each with a 15-second deadline and the existing bounded transient retry. In enabled Feature 008 mode, the job MUST use at most two provider attempts total in one shared 15-second phase (primary capped at 8 seconds, backup at 7 seconds); only classified quota/rate-limit, timeout and temporary availability failures may switch once to the configured backup. Schema-invalid output, invalid local input, missing/auth configuration, refusal and permanent failures MUST NOT trigger failover.
 - **FR-010**: The backend MUST validate the request shape, field ranges, and cross-field invariants before invoking a provider. Invalid requests MUST invoke the provider zero times.
 - **FR-011**: The backend MUST derive focus and evidence deterministically and validate the provider's tip before constructing the client response.
 - **FR-012**: The request summary MUST be no more than 4,096 UTF-8 bytes and MUST contain no unknown properties.
@@ -115,6 +115,7 @@ As a player, I want analysis to use only the run measurements needed for Option 
 - **Pending result at following run end**: show the safe unavailable message as the prior result is superseded; invalidate the old request and analyze the newly completed run.
 - **Restart or difficulty switch before display**: preserve hidden ready or pending advice; reveal it only after the next completed run. A reset after display clears the visible notice.
 - **Implementation authorization**: the student pair approved the Option C feature scope on 2026-09-29. The user’s request to complete the W04 assignment, including tests and required artifacts, authorized implementation on the same date. This record does not imply approval for a live provider request.
+- **Feature 008 compatibility addendum**: On 2026-10-06 the user authorized opt-in Gemini backup routing for delayed advice, selecting `gemini-2.5-flash`. Disabled mode preserves this feature's original primary-only behavior and retry policy. Enabled mode shares a 15-second phase across a primary attempt capped at 8 seconds and one backup attempt capped at 7 seconds; output validation, the eight-field input, server-derived focus/evidence, safe unavailable response and one-completed-run display delay are unchanged. Live calls remain separately gated.
 
 ## Assumptions and constraints
 

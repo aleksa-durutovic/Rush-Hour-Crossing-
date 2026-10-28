@@ -82,7 +82,16 @@ describe('POST /api/advice', () => {
     expect(response.headers['cache-control']).toBe('no-store')
     expect(JSON.parse(response.body)).toEqual(validAdvice)
     expect(analyze).toHaveBeenCalledTimes(1)
-    expect(analyze).toHaveBeenCalledWith(validSummary, expect.any(AbortSignal))
+    expect(analyze).toHaveBeenCalledWith(validSummary, expect.any(AbortSignal), expect.any(Function))
+  })
+
+  it('accepts the generated difficulty label without adding coaching fields', async () => {
+    const generated = { ...validSummary, difficulty: 'generated' }
+    const response = await send('POST', JSON.stringify(generated))
+
+    expect(response.status).toBe(200)
+    expect(analyze).toHaveBeenCalledWith(generated, expect.any(AbortSignal), expect.any(Function))
+    expect(Object.keys(JSON.parse(response.body)).sort()).toEqual(['evidence', 'focus', 'nextTip'])
   })
 
   it.each([

@@ -3,6 +3,9 @@ import { defineConfig } from 'vite'
 // Development only: the page calls /api on the Vite origin and Vite forwards it to the local API server.
 export default defineConfig({
   server: {
+    host: '127.0.0.1',
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8787',

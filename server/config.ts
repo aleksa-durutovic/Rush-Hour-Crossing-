@@ -31,3 +31,10 @@ export function readServerConfig(env: Readonly<Record<string, string | undefined
 export function allowedHostsFor(port: number): readonly string[] {
   return [`127.0.0.1:${port}`, `localhost:${port}`]
 }
+
+/** Exact browser origins the application may receive AI POSTs from. */
+export function allowedOriginsFor(port: number, development = false): readonly string[] {
+  const origins = [`http://127.0.0.1:${port}`, `http://localhost:${port}`]
+  if (development) origins.push('http://127.0.0.1:5173', 'http://localhost:5173')
+  return origins
+}

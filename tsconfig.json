@@ -16,6 +16,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "tests", "e2e", "playwright.config.ts"],
-  "exclude": ["tests/server"]
+  "include": ["src", "tests", "e2e", "playwright.config.ts", "playwright.security.config.ts"],
+  "exclude": ["tests/server", "tests/security", "e2e/security.pw.ts"]
 }

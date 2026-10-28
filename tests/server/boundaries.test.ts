@@ -50,11 +50,30 @@ describe('frontend and backend boundaries', () => {
   })
 
   it('only the Gemini provider adapter imports the SDK', () => {
-    const importers = typeScriptFiles('server').filter((file) => importSpecifiers(file).includes('@google/genai'))
-    expect(importers.sort()).toEqual([
-      'server/advice/gemini-provider.ts',
-      'server/agent/gemini-provider.ts',
-    ])
+    const importers = typeScriptFiles('server')
+      .filter((file) => importSpecifiers(file).includes('@google/genai'))
+      .map((file) => file.replaceAll('\\', '/'))
+    expect(importers).toEqual(['server/advice/gemini-provider.ts'])
+  })
+
+  it('keeps backup profile policy free of SDK and environment access', () => {
+    const files = typeScriptFiles('server/ai').map((file) => file.replaceAll('\\', '/'))
+    const violations = files.flatMap((file) => {
+      const source = readFileSync(file, 'utf8')
+      return [
+        ...(importSpecifiers(file).includes('@google/genai') ? [`${file} imports Gemini SDK`] : []),
+        ...(source.includes('process.env') ? [`${file} reads environment`] : []),
+      ]
+    })
+    expect(violations).toEqual([])
+  })
+
+  it('keeps environment values within the server entry point and provider adapter', () => {
+    const readers = typeScriptFiles('server')
+      .filter((file) => readFileSync(file, 'utf8').includes('process.env'))
+      .map((file) => file.replaceAll('\\', '/'))
+      .sort()
+    expect(readers).toEqual(['server/advice/gemini-provider.ts', 'server/index.ts'])
   })
 
   it('src/ never reads environment variables', () => {
@@ -64,5 +83,32 @@ describe('frontend and backend boundaries', () => {
     })
 
     expect(readers).toEqual([])
+  })
+
+  it('pure generated-level search and metrics contain no browser, clock, randomness or Node dependencies', () => {
+    const files = [...typeScriptFiles('src/game'), 'src/config/generated-level.ts']
+    const forbiddenSources = files.flatMap((file) => {
+      const source = readFileSync(file, 'utf8')
+      const found: string[] = []
+      if (/\b(document|window)\b/.test(source)) found.push(`${file} references browser globals`)
+      if (/\b(?:Date\.now|performance\.now|Math\.random)\b/.test(source)) found.push(`${file} references clock or randomness`)
+      if (importSpecifiers(file).some((specifier) => specifier.startsWith('node:') || NODE_BUILTINS.includes(specifier))) {
+        found.push(`${file} imports Node.js`)
+      }
+      return found
+    })
+    expect(forbiddenSources).toEqual([])
+  })
+
+  it('generator policy and solver tool keep SDK and environment access behind the provider boundary', () => {
+    const files = typeScriptFiles('server/level-generator')
+    const violations = files.flatMap((file) => {
+      const source = readFileSync(file, 'utf8')
+      return [
+        ...(importSpecifiers(file).includes('@google/genai') ? [`${file} imports Gemini SDK`] : []),
+        ...(source.includes('process.env') ? [`${file} reads environment`] : []),
+      ]
+    })
+    expect(violations).toEqual([])
   })
 })
